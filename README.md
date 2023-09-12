@@ -26,24 +26,24 @@ To get started, you'll need Python and pip installed. Then you can install the r
 ```bash
 pip install -r requirements.txt
 ```
-1. Clone the repository
+#### 1. Clone the repository
 ```bash
 git clone https://github.com/yoheinakajima/instagraph.git
 ```
-2. Navigate to the project directory
+#### 2. Navigate to the project directory
 ```bash
 cd instagraph
 ```
-3. Install the required Python packages
+#### 3. Install the required Python packages
 ```bash
 pip install -r requirements.txt
 ```
-4. Set up your OpenAI API Key
+#### 4. Set up your OpenAI API Key
 Add your OpenAI API key to your environment variables:
 ```bash
 export OPENAI_API_KEY=your-api-key-here
 ```
-5. Run the Flask app
+#### 5. Run the Flask app
 ```bash
 python main.py
 ```
