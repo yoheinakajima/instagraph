@@ -27,11 +27,8 @@ Powered by OpenAI's GPT-3.5, this Flask application turns your text into a vivid
 
 ## Installation 🛠️
 
-To get started, you'll need Python and pip installed. Then you can install the required packages with:
+To get started, you'll need Python and pip installed.
 
-```bash
-pip install -r requirements.txt
-```
 #### 1. Clone the repository
 ```bash
 git clone https://github.com/yoheinakajima/instagraph.git
