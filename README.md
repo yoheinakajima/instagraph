@@ -1,3 +1,5 @@
+Note for non-coders: you can sign up for the waitlist at [instagraph.ai](https://instagraph.ai).
+
 # InstaGraph 🌐
 
 Hello there, adventurous coder! Welcome to InstaGraph, your go-to application for converting text or URLs into insightful knowledge graphs. Curious about the relationships between entities in a complex topic? Feed the text to InstaGraph and voila! A beautiful knowledge graph is at your fingertips.
