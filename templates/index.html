@@ -119,59 +119,8 @@
       const brightness = (r * 0.299) + (g * 0.587) + (b * 0.114);
       return brightness < 40 ? '#ffffff' : '#000000';
     }
-  </script>
 
-</body>
-
-</html>
-
-    var cy = cytoscape({
-      container: document.getElementById('cy'),
-      elements: data.elements,
-      
-      style: [
-        {
-          selector: 'node',
-          style: {
-            'background-color': 'data(color)',
-            'label': 'data(label)',
-            'text-valign': 'center',
-            'text-halign': 'center',
-            'shape': 'rectangle',
-            'height': '50px',
-            'width': ele => calcNodeWidth(ele.data('label')),
-            'color': function(ele) {
-              return getTextColor(ele.data('color'));
-            },
-            'font-size': '12px'
-          }
-        },
-        {
-          selector: 'edge',
-          style: {
-            'width': 3,
-            'line-color': 'data(color)',
-            'target-arrow-color': 'data(color)',
-            'target-arrow-shape': 'triangle',
-            'label': 'data(label)',
-            'curve-style': 'unbundled-bezier',
-            'line-dash-pattern': [4, 4],
-            'text-background-color': '#ffffff',
-            'text-background-opacity': 1,
-            'text-background-shape': 'rectangle',
-            'font-size': '10px'
-          }
-        }
-      ],
-      layout: {
-        name: 'cose',
-        fit: true,
-        padding: 30,
-        avoidOverlap: true
-      }
-    });
-  }
-
+  
   // Event listener for the form submission
   document.getElementById('inputForm').addEventListener('submit', function(e) {
       e.preventDefault();  // Prevent form submission
@@ -215,8 +164,6 @@
   });
 
 
-
-
 function getTextColor(backgroundColor) {
   // Remove the '#' from the color value if present
   backgroundColor = backgroundColor.replace('#', '');
@@ -238,8 +185,11 @@ function getTextColor(backgroundColor) {
     return '#000000'; // Use black text
   }
 }
-</script>
+  </script>
 
+</body>
+
+</html>
 
 </body>
 </html>
