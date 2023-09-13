@@ -2,3 +2,4 @@ Flask==2.3.3
 graphviz==0.20.1
 networkx==3.1
 openai==0.28.0
+bs4==4.12.2
