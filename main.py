@@ -142,7 +142,7 @@ def get_response_data():
             UNWIND $nodes AS node
             MERGE (n:Node {id:toLower(node.id)})
             SET n.type = node.type, n.label = node.label, n.color = node.color""",
-                                    {"nodes": json.loads(response_data)['nodes']})
+                                       {"nodes": json.loads(response_data)['nodes']})
             # Import relationships
             neo4j_driver.execute_query("""
             UNWIND $rels AS rel
