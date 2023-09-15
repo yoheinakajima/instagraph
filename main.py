@@ -7,11 +7,14 @@ from graphviz import Digraph
 import networkx as nx
 from neo4j import GraphDatabase
 from flask import Flask, jsonify, render_template, request
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 
 # Set your OpenAI API key
-openai.api_key = os.environ["OPENAI_API_KEY"]
+openai.api_key = os.getenv("OPENAI_API_KEY")
 response_data = ""
 
 # If Neo4j credentials are set, then Neo4j is used to store information
