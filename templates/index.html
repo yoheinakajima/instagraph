@@ -24,13 +24,15 @@
     <body class="bg-gray-100">
         <div class="container mx-auto mt-10 p-4 bg-white rounded shadow-md">
             <form id="inputForm" class="mb-4">
-                <label for="userInput" class="block text-lg font-medium mb-2">Enter a URL or a string of text:</label>
+                <label for="userInput" class="block text-3xl font-medium mb-2">
+                  URL/Text
+                </label>
                 <div class="flex items-center">
                     <input type="text" id="userInput" class="flex-grow p-2 border rounded-md mr-2" />
                     <input type="submit" value="Submit" class="p-2 bg-blue-500 text-white rounded" />
                 </div>
             </form>
-            <div id="load" class="w-full h-3 mb-2 bg-white rounded-md shadow"></div>
+            <div id="load" class="w-full h-3 mb-2 bg-white rounded-md shadow" style="display: none;"></div>
             <!-- <div id="cy" class="w-full h-screen bg-white rounded-md shadow"></div> -->
 
             <div class="container mx-auto mt-10 p-4 bg-white rounded shadow-md flex space-x-4">
@@ -38,7 +40,7 @@
                     <!-- Graph will be displayed here -->
                 </div>
                 <div class="md:w-1/3 bg-white rounded-md shadow p-2.5">
-                    <h1 class="mb-2">Graph History</h1>
+                    <h1 class="mb-2 text-2xl">Graph History</h1>
 
                     <!-- List of available graphs will be displayed here -->
                     <div class="space-y-2 overflow-y-auto" id="history"></div>
@@ -53,6 +55,7 @@
 
             form.addEventListener("submit", async (e) => {
                 e.preventDefault();
+                load.style.display = "block"; // show the load div
                 load.classList.add("loading");
 
                 const userInput = document.getElementById("userInput").value;
@@ -62,9 +65,11 @@
                     const response = await postData("/get_response_data", payload);
                     const graphData = await postData("/get_graph_data");
                     load.classList.remove("loading");
+                    load.style.display = "none"; // hide the load div
                     createGraph(graphData);
                 } catch (error) {
                     load.classList.remove("loading");
+                    load.style.display = "none"; // hide the load div
                     console.error("Fetch Error:", error);
                 }
             });
@@ -228,6 +233,8 @@
                     });
                 } catch (error) {
                     console.error("Error fetching graph history:", error);
+                    const graphHistoryDiv = document.getElementById("history");
+                    graphHistoryDiv.innerHTML += `<p> Error fetching graph history: ${error}<p>`;
                 }
             }
 
