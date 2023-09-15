@@ -28,7 +28,20 @@
       </div>
     </form>
     <div id="load" class="w-full h-3 mb-2 bg-white rounded-md shadow"></div>
-    <div id="cy" class="w-full h-screen bg-white rounded-md shadow"></div>
+    <!-- <div id="cy" class="w-full h-screen bg-white rounded-md shadow"></div> -->
+    
+    <div class="container mx-auto mt-10 p-4 bg-white rounded shadow-md flex space-x-4">
+      <div class="flex-grow md:flex-grow-0 md:w-2/3 bg-white rounded-md shadow" id="cy">
+        <!-- Graph will be displayed here -->
+      </div>
+      <div class="md:w-1/3 bg-white rounded-md shadow p-2.5">
+        <h1 class="mb-2">Graph History</h1>
+
+        <!-- List of available graphs will be displayed here -->
+        <div class="space-y-2 overflow-y-auto"  id="history">
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -185,6 +198,34 @@ function getTextColor(backgroundColor) {
     return '#000000'; // Use black text
   }
 }
+
+async function fetchGraphHistory() {
+  try {
+    const response = await fetch('/get_graph_history', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error('Network response was not ok ' + response.statusText);
+    }
+    
+    const { graph_history } = await response.json();
+      
+    const graphHistoryDiv = document.getElementById('history');
+    
+    graph_history.forEach((item, index) => {
+      graphHistoryDiv.innerHTML += `
+        <div class="bg-gray-200 hover:bg-gray-300 p-5 rounded"><p>${index + 1}. From: ${item.from_node.label} (Type: ${item.from_node.type}) - Relationship: ${item.relationship.type} (Direction: ${item.relationship.direction}) - To: ${item.to_node.label} (Type: ${item.to_node.type})</p></div>`;
+    });
+  } catch (error) {
+    console.error('Error fetching graph history:', error);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', fetchGraphHistory);
   </script>
 
 </body>
