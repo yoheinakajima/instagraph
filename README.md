@@ -42,9 +42,13 @@ cd instagraph
 pip install -r requirements.txt
 ```
 #### 4. Set up your OpenAI API Key
-Add your OpenAI API key to your environment variables:
+Change .env.example to .env
+''' bash
+    mv .env.example .env
+'''
+Add your OpenAI API key to .env file:
 ```bash
-export OPENAI_API_KEY=your-api-key-here
+OPENAI_API_KEY=your-api-key-here
 ```
 #### 5. Run the Flask app
 ```bash
