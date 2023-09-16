@@ -167,6 +167,11 @@
             padding: 30,
             avoidOverlap: true,
           },
+
+          ready: function(){
+            this.fit(); // Fits all elements in the viewport
+            this.center(); // Centers the graph in the viewport
+          }
         });
       }
 
