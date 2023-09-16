@@ -30,30 +30,53 @@ Powered by OpenAI's GPT-3.5, this Flask application turns your text into a vivid
 To get started, you'll need Python and pip installed.
 
 #### 1. Clone the repository
+
 ```bash
 git clone https://github.com/yoheinakajima/instagraph.git
 ```
+
 #### 2. Navigate to the project directory
+
 ```bash
 cd instagraph
 ```
+
 #### 3. Install the required Python packages
+
 ```bash
 pip install -r requirements.txt
 ```
+
 #### 4. Set up your OpenAI API Key
+
 Change .env.example to .env
-''' bash
-    mv .env.example .env
-'''
+
+```text
+mv .env.example .env
+```
+
 Add your OpenAI API key to .env file:
-```bash
+
+```text
 OPENAI_API_KEY=your-api-key-here
 ```
+
+##### Optional
+
+Add Neo4J username, password and URL in the `*.env` file as well.
+
+```text
+NEO4J_USERNAME=
+NEO4J_PASSWORD=
+NEO4J_URL=
+```
+
 #### 5. Run the Flask app
+
 ```bash
 python main.py
 ```
+
    Navigate to `http://localhost:8080` to see your app running.
 
 ## Usage 🎉
@@ -77,13 +100,18 @@ python main.py
     - Method: `POST`
     - Response: Graph Data
 
+3. **GET History Data**: `/get_graph_history`
+
+    - Method: `GET`
+    - Response: Graph Data
+
 ## Contributing 🤝
 
 Best way to chat with me is on Twitter at [@yoheinakajima](https://twitter.com/yoheinakajima). I usually only code on the weekends or at night, and in pretty small chunks. I have lots ideas on what I want to add here, but obviously this would move faster with everyone. Not sure I can manage Github well given my time constraints, so please reach out if you want to help me run the Github. Now, here are a few ideas on what I think we should add based on comments...
 - ~~Store knowlege graph~~ (thx @tomasonjo! 9/13/23)
 - ~~Pull knowledge graph from storage~~ (thx @tomasonjo! 9/13/23)
 - Show history
-- Ability to combine two graphs 
+- Ability to combine two graphs
 - Ability to combine 2+ graphs from history
 - ~~Ability to expand on a graph~~ (thx @tomasonjo! 9/13/23)
 - Ability to expand on graph from specific nodes

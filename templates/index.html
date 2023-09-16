@@ -1,192 +1,245 @@
 <!DOCTYPE html>
 <html>
-
-<head>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.16/dist/tailwind.min.css" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.19.0/cytoscape.min.js"></script>
-  <style>
-    .loading {
-      background: linear-gradient(90deg, transparent, #007bff, transparent);
-      background-size: 200% 100%;
-      animation: loading-animation 2s linear infinite;
-    }
-    @keyframes loading-animation {
-      from { background-position: 200% 0; }
-      to { background-position: -200% 0; }
-    }
-  </style>
-</head>
-
-<body class="bg-gray-100">
-  <div class="container mx-auto mt-10 p-4 bg-white rounded shadow-md">
-    <form id="inputForm" class="mb-4">
-      <label for="userInput" class="block text-lg font-medium mb-2">Enter a URL or a string of text:</label>
-      <div class="flex items-center">
-        <input type="text" id="userInput" class="flex-grow p-2 border rounded-md mr-2">
-        <input type="submit" value="Submit" class="p-2 bg-blue-500 text-white rounded">
-      </div>
-    </form>
-    <div id="load" class="w-full h-3 mb-2 bg-white rounded-md shadow"></div>
-    <div id="cy" class="w-full h-screen bg-white rounded-md shadow"></div>
-  </div>
-
-  <script>
-    const calcNodeWidth = label => Math.max(50, label.length * 8) + "px";
-    const form = document.getElementById('inputForm');
-    const load = document.getElementById('load');
-
-    form.addEventListener('submit', async e => {
-      e.preventDefault();
-      load.classList.add('loading');
-
-      const userInput = document.getElementById('userInput').value;
-      const payload = { user_input: userInput };
-
-      try {
-        const response = await postData('/get_response_data', payload);
-        const graphData = await postData('/get_graph_data');
-        load.classList.remove('loading');
-        createGraph(graphData);
-      } catch (error) {
-        load.classList.remove('loading');
-        console.error('Fetch Error:', error);
-      }
-    });
-
-    async function postData(url, data = {}) {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-
-      if (!response.ok) throw new Error(await response.text());
-
-      return await response.json();
-    }
-
-    function createGraph(data) {
-      cytoscape({
-        container: document.getElementById('cy'),
-        elements: data.elements,
-        style: [
-        {
-          selector: 'node',
-          style: {
-              'background-color': 'data(color)',
-              'label': 'data(label)',
-              'text-valign': 'center',
-              'text-halign': 'center',
-              'shape': 'rectangle',
-              'height': '50px',
-              'width': ele => calcNodeWidth(ele.data('label')),
-              'color': function(ele) {
-                return getTextColor(ele.data('color'));
-              },
-              'font-size': '12px'
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.16/dist/tailwind.min.css" rel="stylesheet" />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.19.0/cytoscape.min.js"></script>
+        <title> Instagraph </title>
+        <style>
+            .loading {
+                background: linear-gradient(90deg, transparent, #007bff, transparent);
+                background-size: 200% 100%;
+                animation: loading-animation 2s linear infinite;
             }
-          },
-          {
-            selector: 'edge',
-            style: {
-              'width': 3,
-              'line-color': 'data(color)',
-              'target-arrow-color': 'data(color)',
-              'target-arrow-shape': 'triangle',
-              'label': 'data(label)',
-              'curve-style': 'unbundled-bezier',
-              'line-dash-pattern': [4, 4],
-              'text-background-color': '#ffffff',
-              'text-background-opacity': 1,
-              'text-background-shape': 'rectangle',
-              'font-size': '10px'
+            @keyframes loading-animation {
+                from {
+                    background-position: 200% 0;
+                }
+                to {
+                    background-position: -200% 0;
+                }
             }
-          }
-        ],
-        layout: {
-          name: 'cose',
-          fit: true,
-          padding: 30,
-          avoidOverlap: true
-        } 
-      });
-    }
+        </style>
+    </head>
 
-    function getTextColor(bgColor) {
-      bgColor = bgColor.replace('#', '');
-      const [r, g, b] = [0, 2, 4].map(start => parseInt(bgColor.substr(start, 2), 16));
-      const brightness = (r * 0.299) + (g * 0.587) + (b * 0.114);
-      return brightness < 40 ? '#ffffff' : '#000000';
-    }
+    <body class="bg-gray-100">
+        <div class="container mx-auto mt-10 p-4 bg-white rounded shadow-md">
+            <form id="inputForm" class="mb-4">
+                <label for="userInput" class="block text-3xl font-medium mb-2">
+                  URL/Text
+                </label>
+                <div class="flex items-center">
+                    <input type="text" id="userInput" class="flex-grow p-2 border rounded-md mr-2" />
+                    <input type="submit" value="Submit" class="p-2 bg-blue-500 text-white rounded" />
+                </div>
+            </form>
+            <div id="load" class="w-full h-3 mb-2 bg-white rounded-md shadow" style="display: none;"></div>
+            <!-- <div id="cy" class="w-full h-screen bg-white rounded-md shadow"></div> -->
 
-  
-  // Event listener for the form submission
-  document.getElementById('inputForm').addEventListener('submit', function(e) {
-      e.preventDefault();  // Prevent form submission
-      const userInput = document.getElementById('userInput').value;
-      
-      // Add the loading class to start the animation
-      document.getElementById('load').classList.add('loading');
-  
-      fetch('/get_response_data', {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({user_input: userInput})
-      })
-      .then(response => {
-          if (!response.ok) {
-              return response.text().then(text => { throw new Error(text) });
-          }
-          return fetch('/get_graph_data',{
-            method: 'POST'
-          });
-      })
-      .then(response => {
-          if (!response.ok) {
-              return response.text().then(text => { throw new Error(text) });
-          }
-          return response.json();
-      })
-      .then(data => {
-          // Remove the loading class to stop the animation
-          document.getElementById('load').classList.remove('loading');
-          // Call createGraph with the data received
-          createGraph(data);
-      })
-      .catch(error => {
-          // Remove the loading class if there's an error
-          document.getElementById('load').classList.remove('loading');
-          console.error('Fetch Error:', error);
-      });
-  });
+            <div class="container mx-auto mt-10 p-4 bg-white rounded shadow-md flex space-x-4">
+                <div class="flex-grow md:flex-grow-0 md:w-2/3 bg-white rounded-md shadow" id="cy">
+                    <!-- Graph will be displayed here -->
+                </div>
+                <div class="md:w-1/3 bg-white rounded-md shadow p-2.5">
+                    <h1 class="mb-2 text-2xl">Graph History</h1>
 
+                    <!-- List of available graphs will be displayed here -->
+                    <div class="space-y-2 overflow-y-auto" id="history"></div>
+                </div>
+            </div>
+        </div>
 
-function getTextColor(backgroundColor) {
-  // Remove the '#' from the color value if present
-  backgroundColor = backgroundColor.replace('#', '');
-  console.log("backgroundColor:" + backgroundColor);
+        <script>
+            const calcNodeWidth = (label) => Math.max(50, label.length * 8) + "px";
+            const form = document.getElementById("inputForm");
+            const load = document.getElementById("load");
 
-  // Convert the color to its R, G, B components
-  let r = parseInt(backgroundColor.substring(0, 2), 16);
-  let g = parseInt(backgroundColor.substring(2, 4), 16);
-  let b = parseInt(backgroundColor.substring(4, 6), 16);
+            form.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                load.style.display = "block"; // show the load div
+                load.classList.add("loading");
 
-  // Calculate the brightness
-  let brightness = (r * 0.299) + (g * 0.587) + (b * 0.114);
-  console.log("brightness:"+ brightness);
+                const userInput = document.getElementById("userInput").value;
+                const payload = { user_input: userInput };
 
-  // Determine text color based on brightness
-  if (brightness < 40) {
-    return '#ffffff'; // Use white textw
-  } else {
-    return '#000000'; // Use black text
-  }
-}
-  </script>
+                try {
+                    const response = await postData("/get_response_data", payload);
+                    const graphData = await postData("/get_graph_data");
+                    load.classList.remove("loading");
+                    load.style.display = "none"; // hide the load div
+                    createGraph(graphData);
+                } catch (error) {
+                    load.classList.remove("loading");
+                    load.style.display = "none"; // hide the load div
+                    console.error("Fetch Error:", error);
+                }
+            });
 
-</body>
+            async function postData(url, data = {}) {
+                const response = await fetch(url, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data),
+                });
 
+                if (!response.ok) throw new Error(await response.text());
+
+                return await response.json();
+            }
+
+            function createGraph(data) {
+                cytoscape({
+                    container: document.getElementById("cy"),
+                    elements: data.elements,
+                    style: [
+                        {
+                            selector: "node",
+                            style: {
+                                "background-color": "data(color)",
+                                label: "data(label)",
+                                "text-valign": "center",
+                                "text-halign": "center",
+                                shape: "rectangle",
+                                height: "50px",
+                                width: (ele) => calcNodeWidth(ele.data("label")),
+                                color: function (ele) {
+                                    return getTextColor(ele.data("color"));
+                                },
+                                "font-size": "12px",
+                            },
+                        },
+                        {
+                            selector: "edge",
+                            style: {
+                                width: 3,
+                                "line-color": "data(color)",
+                                "target-arrow-color": "data(color)",
+                                "target-arrow-shape": "triangle",
+                                label: "data(label)",
+                                "curve-style": "unbundled-bezier",
+                                "line-dash-pattern": [4, 4],
+                                "text-background-color": "#ffffff",
+                                "text-background-opacity": 1,
+                                "text-background-shape": "rectangle",
+                                "font-size": "10px",
+                            },
+                        },
+                    ],
+                    layout: {
+                        name: "cose",
+                        fit: true,
+                        padding: 30,
+                        avoidOverlap: true,
+                    },
+                });
+            }
+
+            function getTextColor(bgColor) {
+                bgColor = bgColor.replace("#", "");
+                const [r, g, b] = [0, 2, 4].map((start) => parseInt(bgColor.substr(start, 2), 16));
+                const brightness = r * 0.299 + g * 0.587 + b * 0.114;
+                return brightness < 40 ? "#ffffff" : "#000000";
+            }
+
+            // Event listener for the form submission
+            document.getElementById("inputForm").addEventListener("submit", function (e) {
+                e.preventDefault(); // Prevent form submission
+                const userInput = document.getElementById("userInput").value;
+
+                // Add the loading class to start the animation
+                document.getElementById("load").classList.add("loading");
+
+                fetch("/get_response_data", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ user_input: userInput }),
+                })
+                    .then((response) => {
+                        if (!response.ok) {
+                            return response.text().then((text) => {
+                                throw new Error(text);
+                            });
+                        }
+                        return fetch("/get_graph_data", {
+                            method: "POST",
+                        });
+                    })
+                    .then((response) => {
+                        if (!response.ok) {
+                            return response.text().then((text) => {
+                                throw new Error(text);
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then((data) => {
+                        // Remove the loading class to stop the animation
+                        document.getElementById("load").classList.remove("loading");
+                        // Call createGraph with the data received
+                        createGraph(data);
+                    })
+                    .catch((error) => {
+                        // Remove the loading class if there's an error
+                        document.getElementById("load").classList.remove("loading");
+                        console.error("Fetch Error:", error);
+                    });
+            });
+
+            function getTextColor(backgroundColor) {
+                // Remove the '#' from the color value if present
+                backgroundColor = backgroundColor.replace("#", "");
+                console.log("backgroundColor:" + backgroundColor);
+
+                // Convert the color to its R, G, B components
+                let r = parseInt(backgroundColor.substring(0, 2), 16);
+                let g = parseInt(backgroundColor.substring(2, 4), 16);
+                let b = parseInt(backgroundColor.substring(4, 6), 16);
+
+                // Calculate the brightness
+                let brightness = r * 0.299 + g * 0.587 + b * 0.114;
+                console.log("brightness:" + brightness);
+
+                // Determine text color based on brightness
+                if (brightness < 40) {
+                    return "#ffffff"; // Use white textw
+                } else {
+                    return "#000000"; // Use black text
+                }
+            }
+
+            async function fetchGraphHistory() {
+                try {
+                    const response = await fetch("/get_graph_history", {
+                        method: "GET",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                    });
+
+                    if (!response.ok) {
+                        throw new Error("Network response was not ok " + response.statusText);
+                    }
+
+                    const { graph_history } = await response.json();
+
+                    const graphHistoryDiv = document.getElementById("history");
+
+                    graph_history.forEach((item, index) => {
+                        graphHistoryDiv.innerHTML += `
+        <div class="bg-gray-200 hover:bg-gray-300 p-5 rounded"><p>${index + 1}. From: ${item.from_node.label} (Type: ${item.from_node.type}) - Relationship: ${item.relationship.type} (Direction: ${item.relationship.direction}) - To: ${
+                            item.to_node.label
+                        } (Type: ${item.to_node.type})</p></div>`;
+                    });
+                } catch (error) {
+                    console.error("Error fetching graph history:", error);
+                    const graphHistoryDiv = document.getElementById("history");
+                    graphHistoryDiv.innerHTML += `<p> Error fetching graph history: ${error}<p>`;
+                }
+            }
+
+            document.addEventListener("DOMContentLoaded", fetchGraphHistory);
+        </script>
+    </body>
 </html>
