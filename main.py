@@ -242,14 +242,31 @@ def get_graph_data():
 @app.route("/get_graph_history", methods=["GET"])
 def get_graph_history():
     try:
+        page = request.args.get('page', default=1, type=int)
+        per_page = 10
+        skip = (page - 1) * per_page
+
         if neo4j_driver:
+            # Getting the total number of graphs
+            total_graphs, _, _ = neo4j_driver.execute_query("""
+            MATCH (n)-[r]->(m)
+            RETURN count(n) as total_count
+            """)
+            total_count = total_graphs[0]['total_count']
+
+            # Fetching 10 most recent graphs
             result, _, _ = neo4j_driver.execute_query("""
             MATCH (n)-[r]->(m)
             RETURN n, r, m
-            """)
+            ORDER BY r.timestamp DESC
+            SKIP {skip}
+            LIMIT {per_page}
+            """.format(skip=skip, per_page=per_page))
+
             # Process the 'result' to format it as a list of graphs
             graph_history = [process_graph_data(record) for record in result]
-            return jsonify({"graph_history": graph_history})
+
+            return jsonify({"graph_history": graph_history, "remaining": total_count - skip - per_page})
         else:
             return jsonify({"error": "Neo4j driver not initialized"}), 500
     except Exception as e:
