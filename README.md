@@ -56,6 +56,25 @@ python main.py
 ```
    Navigate to `http://localhost:8080` to see your app running.
 
+## Run as Container 
+#### 1. Clone the repository
+```bash
+git clone https://github.com/yoheinakajima/instagraph.git
+```
+#### 2. Navigate to the project directory
+```bash
+cd instagraph
+```
+#### 3. Create the docker image 
+```bash
+docker build -t instagraph .
+```
+
+#### 4. Run as container
+```bash
+docker-compose up -d
+```
+
 ## Usage 🎉
 
 ### Web Interface

@@ -4,4 +4,4 @@ services:
     image: instagraph:latest
     container_name: instagraph
     ports:
-      - 8000:8080
+      - 8080:8080
