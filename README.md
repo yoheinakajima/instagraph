@@ -121,7 +121,7 @@ There are a lot of "build a chart" tools out there, so instead of doing user acc
 
 ## License 📝
 
-MIT License. See [LICENSE.md](LICENSE.md) for more information.
+MIT License. See [LICENSE](LICENSE) for more information.
 
 ---
 
