@@ -168,10 +168,10 @@
             avoidOverlap: true,
           },
 
-          ready: function(){
+          ready: function () {
             this.fit(); // Fits all elements in the viewport
             this.center(); // Centers the graph in the viewport
-          }
+          },
         });
       }
 
@@ -257,6 +257,14 @@
             }
             **/
 
+      // draw graph from history.
+      function handleGraphItemClick(event) {
+        const itemData = JSON.parse(
+          event.currentTarget.getAttribute("data-item")
+        );
+        console.log(itemData);
+      }
+
       async function fetchGraphHistory() {
         try {
           const response = await fetch("/get_graph_history", {
@@ -279,15 +287,17 @@
 
           graph_history.forEach((item, index) => {
             graphHistoryDiv.innerHTML += `
-        <div class="bg-gray-200 hover:bg-gray-300 p-5 rounded"><p>${
-          index + 1
-        }. From: ${item.from_node.label} (Type: ${
+              <div class="bg-gray-200 hover:bg-gray-300 p-5 rounded" onclick="handleGraphItemClick(event)" data-item='${JSON.stringify(
+                item
+              )}'>
+                <p>${index + 1}. From: ${item.from_node.label} (Type: ${
               item.from_node.type
-            }) - Relationship: ${item.relationship.type} (Direction: ${
+            }) 
+                - Relationship: ${item.relationship.type} (Direction: ${
               item.relationship.direction
-            }) - To: ${item.to_node.label} (Type: ${
-              item.to_node.type
-            })</p></div>`;
+            }) 
+                - To: ${item.to_node.label} (Type: ${item.to_node.type})</p>
+              </div>`;
           });
         } catch (error) {
           console.error("Error fetching graph history:", error);
