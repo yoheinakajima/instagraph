@@ -1,0 +1,7 @@
+version: "3.9"
+services:
+  instagraph:
+    image: instagraph:latest
+    container_name: instagraph
+    ports:
+      - 8000:8080
