@@ -169,7 +169,7 @@ def get_response_data():
     except json.decoder.JSONDecodeError as jde:
         return jsonify({"error": "".format(jde)}), 500
 
-    return jsonify(response_data), 200
+    return response_data, 200
 
 
 # Function to visualize the knowledge graph using Graphviz
