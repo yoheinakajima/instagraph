@@ -107,8 +107,7 @@ python main.py
 
 ## Contributing 🤝
 
-Best way to chat with me is on Twitter at [https://twitter.com/yoheinakajima](@yoheinakajima). I usually only code on the weekends or at night, and in pretty small chunks. I have lots ideas on what I want to add here, but obviously this would move faster with everyone. Not sure I can manage Github well given my time constraints, so please reach out if you want to help me run the Github. Now, here are a few ideas on what I think we should add based on comments...
-
+Best way to chat with me is on Twitter at [@yoheinakajima](https://twitter.com/yoheinakajima). I usually only code on the weekends or at night, and in pretty small chunks. I have lots ideas on what I want to add here, but obviously this would move faster with everyone. Not sure I can manage Github well given my time constraints, so please reach out if you want to help me run the Github. Now, here are a few ideas on what I think we should add based on comments...
 - ~~Store knowlege graph~~ (thx @tomasonjo! 9/13/23)
 - ~~Pull knowledge graph from storage~~ (thx @tomasonjo! 9/13/23)
 - Show history
@@ -118,7 +117,7 @@ Best way to chat with me is on Twitter at [https://twitter.com/yoheinakajima](@y
 - Ability to expand on graph from specific nodes
 - Fuzzy matching of nodes for combining graphs (vector match + LLM confirmation)
 
-There are a lot of "build a chart" tools out there, so instead of doing user account and custom charts, it sounds more fun for me to work on building the largest knowlege graph ever...
+There are a lot of "build a chart" tools out there, so instead of doing user account and custom charts, it sounds more fun for me to work on building the largest knowledge graph ever...
 
 ## License 📝
 
