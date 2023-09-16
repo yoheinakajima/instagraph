@@ -8,6 +8,7 @@ import networkx as nx
 from neo4j import GraphDatabase
 from flask import Flask, jsonify, render_template, request
 from dotenv import load_dotenv
+import time
 
 load_dotenv()
 
@@ -37,6 +38,29 @@ def scrape_text_from_url(url):
     print("web scrape done")
     return text
 
+# Check sub/user plan before making a request
+def make_request(request_body):
+    if check_if_free_plan():
+        time.sleep(20)
+    response = api.create_completion(request_body)
+    return response
+
+# Function to check user plan
+def check_if_free_plan():
+    return user_plan == 'free'
+
+# Rate limiting
+@app.after_request
+def add_header(response):
+    if check_if_free_plan():
+        response.headers['Retry-After'] = 20
+    return response
+
+# Handling 429 error
+@app.errorhandler(429) 
+def too_many_requests(e):
+    time.sleep(20)
+    return make_request(request.json)
 
 @app.route("/get_response_data", methods=["POST"])
 def get_response_data():
