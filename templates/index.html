@@ -103,6 +103,7 @@
           load.style.display = "none"; // hide the load div
           console.error("Fetch Error:", error);
           showError("Fetch Error: " + error);
+          return;
         }
       });
 
@@ -197,9 +198,7 @@
 
           if (!response.ok) {
             showError("Network response was not ok " + response.statusText);
-            //throw new Error(
-            //  "Network response was not ok " + response.statusText
-            //);
+            return;
           }
 
           const { graph_history } = await response.json();
@@ -224,6 +223,7 @@
           console.error("Error fetching graph history:", error);
           const graphHistoryDiv = document.getElementById("history");
           graphHistoryDiv.innerHTML += `<p> Error fetching graph history: ${error}<p>`;
+          return;
         }
       }
 

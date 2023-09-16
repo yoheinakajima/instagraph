@@ -157,7 +157,7 @@ def get_response_data():
                 r.timestamp = timestamp();
             """, {"rels": json.loads(response_data)['edges']})
     except json.decoder.JSONDecodeError as jde:
-        return jsonify({"error": "".format(jde)}), 500
+        return jsonify({"Error": "{}".format(jde)}), 500
 
     return response_data
 
@@ -266,8 +266,9 @@ def get_graph_history():
 
             # Process the 'result' to format it as a list of graphs
             graph_history = [process_graph_data(record) for record in result]
+            remaining = max(0, total_count - skip - per_page)
 
-            return jsonify({"graph_history": graph_history, "remaining": total_count - skip - per_page})
+            return jsonify({"graph_history": graph_history, "remaining": remaining})
         else:
             return jsonify({"error": "Neo4j driver not initialized"}), 500
     except Exception as e:
