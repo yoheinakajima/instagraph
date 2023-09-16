@@ -153,7 +153,8 @@ def get_response_data():
             MATCH (t:Node {id: toLower(rel.to)})
             MERGE (s)-[r:RELATIONSHIP {type:rel.relationship}]->(t)
             SET r.direction = rel.direction,
-                r.color = rel.color;
+                r.color = rel.color,
+                r.timestamp = timestamp();
             """, {"rels": json.loads(response_data)['edges']})
     except json.decoder.JSONDecodeError as jde:
         return jsonify({"error": "".format(jde)}), 500
