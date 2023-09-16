@@ -257,14 +257,6 @@
             }
             **/
 
-      // draw graph from history.
-      function handleGraphItemClick(event) {
-        const itemData = JSON.parse(
-          event.currentTarget.getAttribute("data-item")
-        );
-        console.log(itemData);
-      }
-
       async function fetchGraphHistory() {
         try {
           const response = await fetch("/get_graph_history", {
@@ -315,6 +307,56 @@
         setTimeout(() => {
           errorDiv.style.display = "none";
         }, 5000);
+      }
+
+      // draw graph from history.
+      function handleGraphItemClick(event) {
+        const itemData = JSON.parse(
+          event.currentTarget.getAttribute("data-item")
+        );
+        const transformedData = transformDataToGraphFormat(itemData);
+
+        createGraph(transformedData);
+      }
+
+      function transformDataToGraphFormat(itemData) {
+        /**
+         * Transforms the graph history data to a format suitable for creating a graph using the createGraph function.
+         *
+         * @author shepherd-06
+         **/
+        return {
+          elements: {
+            edges: [
+              {
+                data: {
+                  color: itemData.relationship.color,
+                  label: itemData.relationship.type,
+                  source: itemData.from_node.id,
+                  target: itemData.to_node.id,
+                },
+              },
+            ],
+            nodes: [
+              {
+                data: {
+                  id: itemData.from_node.id,
+                  label: itemData.from_node.label,
+                  type: itemData.from_node.type,
+                  color: itemData.from_node.color,
+                },
+              },
+              {
+                data: {
+                  id: itemData.to_node.id,
+                  label: itemData.to_node.label,
+                  type: itemData.to_node.type,
+                  color: itemData.to_node.color,
+                },
+              },
+            ],
+          },
+        };
       }
 
       // event listeners
