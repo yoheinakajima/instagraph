@@ -1,5 +1,6 @@
 import os
 import json
+import re
 import openai
 import requests
 from bs4 import BeautifulSoup
@@ -43,6 +44,15 @@ def scrape_text_from_url(url):
     print("web scrape done")
     return text
 
+def correct_json(response_data):
+    """
+    Corrects the JSON response from OpenAI to be valid JSON
+    """
+    response_data = re.sub(
+        r',\s*}', '}',
+        re.sub(r',\s*]', ']',
+               re.sub(r'(\w+)\s*:', r'"\1":', response_data)))
+    return response_data
 
 @app.route("/get_response_data", methods=["POST"])
 def get_response_data():
@@ -137,6 +147,7 @@ def get_response_data():
         return jsonify({"error": "".format(e)}), 400
 
     response_data = completion.choices[0]["message"]["function_call"]["arguments"]
+    response_data = correct_json(response_data)
     # print(response_data)
     try:
         if neo4j_driver:
@@ -158,7 +169,7 @@ def get_response_data():
     except json.decoder.JSONDecodeError as jde:
         return jsonify({"error": "".format(jde)}), 500
 
-    return response_data
+    return jsonify(response_data), 200
 
 
 # Function to visualize the knowledge graph using Graphviz
@@ -258,7 +269,7 @@ def get_graph_history():
 
 def process_graph_data(record):
     """
-    This function processes a record from the Neo4j query result 
+    This function processes a record from the Neo4j query result
     and formats it as a dictionary with the node details and the relationship.
 
     :param record: A record from the Neo4j query result
