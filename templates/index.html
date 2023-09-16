@@ -185,78 +185,7 @@
         return brightness < 40 ? "#ffffff" : "#000000";
       }
 
-      // Event listener for the form submission
-      /** This part of code is [DOUBLE]. They exist in the beginning of the Script.
-            document.getElementById("inputForm").addEventListener("submit", function (e) {
-                e.preventDefault(); // Prevent form submission
-                const userInput = document.getElementById("userInput").value;
-
-                // Add the loading class to start the animation
-                document.getElementById("load").classList.add("loading");
-
-                fetch("/get_response_data", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({ user_input: userInput }),
-                })
-                    .then((response) => {
-                        if (!response.ok) {
-                            return response.text().then((text) => {
-                                throw new Error(text);
-                            });
-                        }
-                        return fetch("/get_graph_data", {
-                            method: "POST",
-                        });
-                    })
-                    .then((response) => {
-                        if (!response.ok) {
-                            return response.text().then((text) => {
-                                throw new Error(text);
-                            });
-                        }
-                        return response.json();
-                    })
-                    .then((data) => {
-                        // Remove the loading class to stop the animation
-                        document.getElementById("load").classList.remove("loading");
-                        // Call createGraph with the data received
-                        createGraph(data);
-                    })
-                    .catch((error) => {
-                        // Remove the loading class if there's an error
-                        document.getElementById("load").classList.remove("loading");
-                        console.error("Fetch Error:", error);
-                    });
-            });
-            **/
-
-      /** This part of code is [DOUBLE]. They exist in the beginning of the Script.
-            function getTextColor(backgroundColor) {
-                // Remove the '#' from the color value if present
-                backgroundColor = backgroundColor.replace("#", "");
-                console.log("backgroundColor:" + backgroundColor);
-
-                // Convert the color to its R, G, B components
-                let r = parseInt(backgroundColor.substring(0, 2), 16);
-                let g = parseInt(backgroundColor.substring(2, 4), 16);
-                let b = parseInt(backgroundColor.substring(4, 6), 16);
-
-                // Calculate the brightness
-                let brightness = r * 0.299 + g * 0.587 + b * 0.114;
-                console.log("brightness:" + brightness);
-
-                // Determine text color based on brightness
-                if (brightness < 40) {
-                    return "#ffffff"; // Use white textw
-                } else {
-                    return "#000000"; // Use black text
-                }
-            }
-            **/
-
+      // fetch graph history from the API.
       async function fetchGraphHistory() {
         try {
           const response = await fetch("/get_graph_history", {
