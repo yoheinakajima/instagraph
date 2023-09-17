@@ -1,0 +1,8 @@
+version: '3'
+services:
+  instagraph-dev:
+    build:
+      context: ../
+      dockerfile: docker/DockerfileDev
+    ports:
+      - "8080:8080"
