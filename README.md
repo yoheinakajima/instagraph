@@ -13,7 +13,7 @@ Powered by OpenAI's GPT-3.5, this Flask application turns your text into a vivid
 ## Table of Contents 📚
 
 - [Features](#features-)
-- [Installation](#installation-)
+- [Installation](#installation-%EF%B8%8F)
 - [Usage](#usage-)
 - [Contributing](#contributing-)
 - [License](#license-)
