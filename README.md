@@ -119,6 +119,8 @@ Best way to chat with me is on Twitter at [@yoheinakajima](https://twitter.com/y
 
 There are a lot of "build a chart" tools out there, so instead of doing user account and custom charts, it sounds more fun for me to work on building the largest knowledge graph ever...
 
+Before creating an Issue please refer the [ISSUE_TEMPLATE](https://github.com/yoheinakajima/instagraph/tree/main/.github/ISSUE_TEMPLATE) provided.
+
 ## License 📝
 
 MIT License. See [LICENSE](LICENSE) for more information.
