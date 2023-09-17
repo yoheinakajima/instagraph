@@ -54,26 +54,7 @@
             const form = document.getElementById("inputForm");
             const load = document.getElementById("load");
 
-            form.addEventListener("submit", async (e) => {
-                e.preventDefault();
-                load.style.display = "block"; // show the load div
-                load.classList.add("loading");
 
-                const userInput = document.getElementById("userInput").value;
-                const payload = { user_input: userInput };
-
-                try {
-                    const response = await postData("/get_response_data", payload);
-                    const graphData = await postData("/get_graph_data");
-                    load.classList.remove("loading");
-                    load.style.display = "none"; // hide the load div
-                    createGraph(graphData);
-                } catch (error) {
-                    load.classList.remove("loading");
-                    load.style.display = "none"; // hide the load div
-                    console.error("Fetch Error:", error);
-                }
-            });
 
             async function postData(url, data = {}) {
                 const response = await fetch(url, {
@@ -147,6 +128,8 @@
                 const userInput = document.getElementById("userInput").value;
 
                 // Add the loading class to start the animation
+                load.style.display = "block"; // show the load div
+                load.classList.add("loading");
                 document.getElementById("load").classList.add("loading");
 
                 fetch("/get_response_data", {
