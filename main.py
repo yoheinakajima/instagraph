@@ -137,6 +137,8 @@ def get_response_data():
         return jsonify({"error": "".format(e)}), 400
 
     response_data = completion.choices[0]["message"]["function_call"]["arguments"]
+    total_tokens_used = completion.usage["total_tokens"]
+    print(f"total_tokens_used: {total_tokens_used}")
     # print(response_data)
     try:
         if neo4j_driver:
