@@ -22,6 +22,10 @@ class Edge(BaseModel):
     properties: Dict[str, Any] = Field({}, description="Additional attributes for the edge")
 
 class KnowledgeGraph(BaseModel):
+    """Generate a knowledge graph with entities and relationships. 
+    Use the colors to help differentiate between different node or edge types/categories. 
+    Always provide light pastel colors that work well with black font.
+    """
     metadata: Metadata = Field(..., description="Metadata for the knowledge graph")
     nodes: List[Node] = Field(..., description="List of nodes in the knowledge graph")
     edges: List[Edge] = Field(..., description="List of edges in the knowledge graph")

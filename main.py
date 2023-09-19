@@ -75,12 +75,17 @@ def get_response_data():
                 }
             ],
             response_model=KnowledgeGraph,
-        )
+        ) # type: ignore
+
+        # Its now a dict, no need to worry about json loading so many times 
+        response_data = completion.model_dump()
     except openai.error.RateLimitError as e:
         # request limit exceeded or something.
+        print(e)
         return jsonify({"error": "".format(e)}), 429
     except Exception as e:
         # general exception handling
+        print(e)
         return jsonify({"error": "".format(e)}), 400
 
     response_data = completion.model_dump()
@@ -91,7 +96,7 @@ def get_response_data():
             UNWIND $nodes AS node
             MERGE (n:Node {id:toLower(node.id)})
             SET n.type = node.type, n.label = node.label, n.color = node.color""",
-                                       {"nodes": json.loads(response_data)['nodes']})
+                                       {"nodes": response_data['nodes']})
             # Import relationships
             neo4j_driver.execute_query("""
             UNWIND $rels AS rel
@@ -100,7 +105,7 @@ def get_response_data():
             MERGE (s)-[r:RELATIONSHIP {type:rel.relationship}]->(t)
             SET r.direction = rel.direction,
                 r.color = rel.color;
-            """, {"rels": json.loads(response_data)['edges']})
+            """, {"rels": response_data['edges']})
     except json.decoder.JSONDecodeError as jde:
         return jsonify({"error": "".format(jde)}), 500
 
@@ -112,8 +117,7 @@ def get_response_data():
 def visualize_knowledge_graph_with_graphviz():
     global response_data
     dot = Digraph(comment="Knowledge Graph")
-    response_dict = json.loads(response_data)
-
+    response_dict = response_data
     # Add nodes to the graph
     for node in response_dict.get("nodes", []):
         dot.node(node["id"], f"{node['label']} ({node['type']})")
@@ -157,7 +161,7 @@ def get_graph_data():
         else:
             global response_data
             # print(response_data)
-            response_dict = json.loads(response_data)
+            response_dict = response_data
             # Assume response_data is global or passed appropriately
             nodes = [
                 {
@@ -172,7 +176,7 @@ def get_graph_data():
             edges = [
                 {
                     "data": {
-                        "source": edge["from"],
+                        "source": edge["from_"],
                         "target": edge["to"],
                         "label": edge["relationship"],
                         "color": edge.get("color", "defaultColor"),
