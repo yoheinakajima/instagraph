@@ -9,6 +9,10 @@ import networkx as nx
 from neo4j import GraphDatabase
 from flask import Flask, jsonify, render_template, request
 from dotenv import load_dotenv
+import instructor 
+from models import KnowledgeGraph
+
+instructor.patch()
 
 load_dotenv()
 
@@ -62,7 +66,7 @@ def get_response_data():
         return jsonify({"error": "No input provided"}), 400
     print("starting openai call")
     try:
-        completion = openai.ChatCompletion.create(
+        completion: KnowledgeGraph = openai.ChatCompletion.create(
             model="gpt-3.5-turbo-16k",
             messages=[
                 {
@@ -70,74 +74,7 @@ def get_response_data():
                     "content": f"Help me understand following by describing as a detailed knowledge graph: {user_input}",
                 }
             ],
-            functions=[
-                {
-                    "name": "knowledge_graph",
-                    "description": "Generate a knowledge graph with entities and relationships. Use the colors to help differentiate between different node or edge types/categories. Always provide light pastel colors that work well with black font.",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "metadata": {
-                                "type": "object",
-                                "properties": {
-                                    "createdDate": {"type": "string"},
-                                    "lastUpdated": {"type": "string"},
-                                    "description": {"type": "string"},
-                                },
-                            },
-                            "nodes": {
-                                "type": "array",
-                                "items": {
-                                    "type": "object",
-                                    "properties": {
-                                        "id": {"type": "string"},
-                                        "label": {"type": "string"},
-                                        "type": {"type": "string"},
-                                        # Added color property
-                                        "color": {"type": "string"},
-                                        "properties": {
-                                            "type": "object",
-                                            "description": "Additional attributes for the node",
-                                        },
-                                    },
-                                    "required": [
-                                        "id",
-                                        "label",
-                                        "type",
-                                        "color",
-                                    ],  # Added color to required
-                                },
-                            },
-                            "edges": {
-                                "type": "array",
-                                "items": {
-                                    "type": "object",
-                                    "properties": {
-                                        "from": {"type": "string"},
-                                        "to": {"type": "string"},
-                                        "relationship": {"type": "string"},
-                                        "direction": {"type": "string"},
-                                        # Added color property
-                                        "color": {"type": "string"},
-                                        "properties": {
-                                            "type": "object",
-                                            "description": "Additional attributes for the edge",
-                                        },
-                                    },
-                                    "required": [
-                                        "from",
-                                        "to",
-                                        "relationship",
-                                        "color",
-                                    ],  # Added color to required
-                                },
-                            },
-                        },
-                        "required": ["nodes", "edges"],
-                    },
-                }
-            ],
-            function_call={"name": "knowledge_graph"},
+            response_model=KnowledgeGraph,
         )
     except openai.error.RateLimitError as e:
         # request limit exceeded or something.
@@ -146,9 +83,7 @@ def get_response_data():
         # general exception handling
         return jsonify({"error": "".format(e)}), 400
 
-    response_data = completion.choices[0]["message"]["function_call"]["arguments"]
-    response_data = correct_json(response_data)
-    # print(response_data)
+    response_data = completion.model_dump()
     try:
         if neo4j_driver:
             # Import nodes
