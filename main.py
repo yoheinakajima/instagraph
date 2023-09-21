@@ -1,5 +1,6 @@
 import os
 import json
+import re
 import openai
 import requests
 from bs4 import BeautifulSoup
@@ -23,11 +24,17 @@ neo4j_username = os.environ.get("NEO4J_USERNAME")
 neo4j_password = os.environ.get("NEO4J_PASSWORD")
 neo4j_url = os.environ.get("NEO4J_URL")
 neo4j_driver = None
+
 if neo4j_username and neo4j_password and neo4j_url:
     neo4j_driver = GraphDatabase.driver(
         neo4j_url, auth=(neo4j_username, neo4j_password))
+    with neo4j_driver.session() as session:
+        session.run("RETURN 1")
+        print("Neo4j database connected successfully!")
 
 # Function to scrape text from a website
+
+
 def scrape_text_from_url(url):
     response = requests.get(url)
     if response.status_code != 200:
@@ -62,6 +69,17 @@ def too_many_requests(e):
     time.sleep(20)
     return make_request(request.json)
 
+def correct_json(response_data):
+    """
+    Corrects the JSON response from OpenAI to be valid JSON
+    """
+    response_data = re.sub(
+        r',\s*}', '}',
+        re.sub(r',\s*]', ']',
+               re.sub(r'(\w+)\s*:', r'"\1":', response_data)))
+    return response_data
+
+
 @app.route("/get_response_data", methods=["POST"])
 def get_response_data():
     global response_data
@@ -69,102 +87,116 @@ def get_response_data():
     if not user_input:
         return jsonify({"error": "No input provided"}), 400
     print("starting openai call")
-    completion = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo-16k",
-        messages=[
-            {
-                "role": "user",
-                "content": f"Help me understand following by describing as a detailed knowledge graph: {user_input}",
-            }
-        ],
-        functions=[
-            {
-                "name": "knowledge_graph",
-                "description": "Generate a knowledge graph with entities and relationships. Use the colors to help differentiate between different node or edge types/categories. Always provide light pastel colors that work well with black font.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "metadata": {
-                            "type": "object",
-                            "properties": {
-                                "createdDate": {"type": "string"},
-                                "lastUpdated": {"type": "string"},
-                                "description": {"type": "string"},
-                            },
-                        },
-                        "nodes": {
-                            "type": "array",
-                            "items": {
+    try:
+        completion = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo-16k",
+            messages=[
+                {
+                    "role": "user",
+                    "content": f"Help me understand following by describing as a detailed knowledge graph: {user_input}",
+                }
+            ],
+            functions=[
+                {
+                    "name": "knowledge_graph",
+                    "description": "Generate a knowledge graph with entities and relationships. Use the colors to help differentiate between different node or edge types/categories. Always provide light pastel colors that work well with black font.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "metadata": {
                                 "type": "object",
                                 "properties": {
-                                    "id": {"type": "string"},
-                                    "label": {"type": "string"},
-                                    "type": {"type": "string"},
-                                    "color": {"type": "string"},  # Added color property
-                                    "properties": {
-                                        "type": "object",
-                                        "description": "Additional attributes for the node",
-                                    },
+                                    "createdDate": {"type": "string"},
+                                    "lastUpdated": {"type": "string"},
+                                    "description": {"type": "string"},
                                 },
-                                "required": [
-                                    "id",
-                                    "label",
-                                    "type",
-                                    "color",
-                                ],  # Added color to required
+                            },
+                            "nodes": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {"type": "string"},
+                                        "label": {"type": "string"},
+                                        "type": {"type": "string"},
+                                        # Added color property
+                                        "color": {"type": "string"},
+                                        "properties": {
+                                            "type": "object",
+                                            "description": "Additional attributes for the node",
+                                        },
+                                    },
+                                    "required": [
+                                        "id",
+                                        "label",
+                                        "type",
+                                        "color",
+                                    ],  # Added color to required
+                                },
+                            },
+                            "edges": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "from": {"type": "string"},
+                                        "to": {"type": "string"},
+                                        "relationship": {"type": "string"},
+                                        "direction": {"type": "string"},
+                                        # Added color property
+                                        "color": {"type": "string"},
+                                        "properties": {
+                                            "type": "object",
+                                            "description": "Additional attributes for the edge",
+                                        },
+                                    },
+                                    "required": [
+                                        "from",
+                                        "to",
+                                        "relationship",
+                                        "color",
+                                    ],  # Added color to required
+                                },
                             },
                         },
-                        "edges": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "from": {"type": "string"},
-                                    "to": {"type": "string"},
-                                    "relationship": {"type": "string"},
-                                    "direction": {"type": "string"},
-                                    "color": {"type": "string"},  # Added color property
-                                    "properties": {
-                                        "type": "object",
-                                        "description": "Additional attributes for the edge",
-                                    },
-                                },
-                                "required": [
-                                    "from",
-                                    "to",
-                                    "relationship",
-                                    "color",
-                                ],  # Added color to required
-                            },
-                        },
+                        "required": ["nodes", "edges"],
                     },
-                    "required": ["nodes", "edges"],
-                },
-            }
-        ],
-        function_call={"name": "knowledge_graph"},
-    )
+                }
+            ],
+            function_call={"name": "knowledge_graph"},
+        )
+    except openai.error.RateLimitError as e:
+        # request limit exceeded or something.
+        return jsonify({"error": "".format(e)}), 429
+    except Exception as e:
+        # general exception handling
+        return jsonify({"error": "".format(e)}), 400
 
     response_data = completion.choices[0]["message"]["function_call"]["arguments"]
-    print(response_data)
-    if neo4j_driver:
-        # Import nodes
-        neo4j_driver.execute_query("""
-        UNWIND $nodes AS node
-        MERGE (n:Node {id:toLower(node.id)})
-        SET n.type = node.type, n.label = node.label, n.color = node.color""",
-            {"nodes": json.loads(response_data)['nodes']})
-        # Import relationships
-        neo4j_driver.execute_query("""
-        UNWIND $rels AS rel
-        MATCH (s:Node {id: toLower(rel.from)})
-        MATCH (t:Node {id: toLower(rel.to)})
-        MERGE (s)-[r:RELATIONSHIP {type:rel.relationship}]->(t)
-        SET r.direction = rel.direction,
-            r.color = rel.color;
-        """, {"rels": json.loads(response_data)['edges']})
+    response_data = correct_json(response_data)
+    # print(response_data)
+    try:
+        if neo4j_driver:
+            # Import nodes
+            neo4j_driver.execute_query("""
+            UNWIND $nodes AS node
+            MERGE (n:Node {id:toLower(node.id)})
+            SET n.type = node.type, n.label = node.label, n.color = node.color""",
+                                       {"nodes": json.loads(response_data)['nodes']})
+            # Import relationships
+            neo4j_driver.execute_query("""
+            UNWIND $rels AS rel
+            MATCH (s:Node {id: toLower(rel.from)})
+            MATCH (t:Node {id: toLower(rel.to)})
+            MERGE (s)-[r:RELATIONSHIP {type:rel.relationship}]->(t)
+            SET r.direction = rel.direction,
+                r.color = rel.color,
+                r.timestamp = timestamp();
+            """, {"rels": json.loads(response_data)['edges']})
+    except json.decoder.JSONDecodeError as jde:
+        return jsonify({"Error": "{}".format(jde)}), 500
 
-    return response_data
+    return response_data, 200
 
 
 # Function to visualize the knowledge graph using Graphviz
@@ -216,7 +248,7 @@ def get_graph_data():
             edges = [el['rel'] for el in edges][0]
         else:
             global response_data
-            print(response_data)
+            # print(response_data)
             response_dict = json.loads(response_data)
             # Assume response_data is global or passed appropriately
             nodes = [
@@ -243,6 +275,65 @@ def get_graph_data():
         return jsonify({"elements": {"nodes": nodes, "edges": edges}})
     except:
         return jsonify({"elements": {"nodes": [], "edges": []}})
+
+
+@app.route("/get_graph_history", methods=["GET"])
+def get_graph_history():
+    try:
+        page = request.args.get('page', default=1, type=int)
+        per_page = 10
+        skip = (page - 1) * per_page
+
+        if neo4j_driver:
+            # Getting the total number of graphs
+            total_graphs, _, _ = neo4j_driver.execute_query("""
+            MATCH (n)-[r]->(m)
+            RETURN count(n) as total_count
+            """)
+            total_count = total_graphs[0]['total_count']
+
+            # Fetching 10 most recent graphs
+            result, _, _ = neo4j_driver.execute_query("""
+            MATCH (n)-[r]->(m)
+            RETURN n, r, m
+            ORDER BY r.timestamp DESC
+            SKIP {skip}
+            LIMIT {per_page}
+            """.format(skip=skip, per_page=per_page))
+
+            # Process the 'result' to format it as a list of graphs
+            graph_history = [process_graph_data(record) for record in result]
+            remaining = max(0, total_count - skip - per_page)
+
+            return jsonify({"graph_history": graph_history, "remaining": remaining})
+        else:
+            return jsonify({"error": "Neo4j driver not initialized"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def process_graph_data(record):
+    """
+    This function processes a record from the Neo4j query result
+    and formats it as a dictionary with the node details and the relationship.
+
+    :param record: A record from the Neo4j query result
+    :return: A dictionary representing the graph data
+    """
+    try:
+        node_from = record['n'].items()
+        node_to = record['m'].items()
+        relationship = record['r'].items()
+
+        graph_data = {
+            "from_node": {key: value for key, value in node_from},
+            "to_node": {key: value for key, value in node_to},
+            "relationship": {key: value for key, value in relationship},
+        }
+
+        return graph_data
+    except Exception as e:
+        return {"error": str(e)}
 
 
 @app.route("/")

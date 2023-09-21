@@ -1,0 +1,10 @@
+version: '3'
+services:
+  instagraph:
+    image: instagraph:latest
+    container_name: instagraph
+    build: 
+      context: ../
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8080:8080"
