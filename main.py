@@ -164,10 +164,11 @@ def get_response_data():
             MATCH (t:Node {id: toLower(rel.to)})
             MERGE (s)-[r:RELATIONSHIP {type:rel.relationship}]->(t)
             SET r.direction = rel.direction,
-                r.color = rel.color;
+                r.color = rel.color,
+                r.timestamp = timestamp();
             """, {"rels": json.loads(response_data)['edges']})
     except json.decoder.JSONDecodeError as jde:
-        return jsonify({"error": "".format(jde)}), 500
+        return jsonify({"Error": "{}".format(jde)}), 500
 
     return response_data, 200
 
@@ -253,14 +254,32 @@ def get_graph_data():
 @app.route("/get_graph_history", methods=["GET"])
 def get_graph_history():
     try:
+        page = request.args.get('page', default=1, type=int)
+        per_page = 10
+        skip = (page - 1) * per_page
+
         if neo4j_driver:
+            # Getting the total number of graphs
+            total_graphs, _, _ = neo4j_driver.execute_query("""
+            MATCH (n)-[r]->(m)
+            RETURN count(n) as total_count
+            """)
+            total_count = total_graphs[0]['total_count']
+
+            # Fetching 10 most recent graphs
             result, _, _ = neo4j_driver.execute_query("""
             MATCH (n)-[r]->(m)
             RETURN n, r, m
-            """)
+            ORDER BY r.timestamp DESC
+            SKIP {skip}
+            LIMIT {per_page}
+            """.format(skip=skip, per_page=per_page))
+
             # Process the 'result' to format it as a list of graphs
             graph_history = [process_graph_data(record) for record in result]
-            return jsonify({"graph_history": graph_history})
+            remaining = max(0, total_count - skip - per_page)
+
+            return jsonify({"graph_history": graph_history, "remaining": remaining})
         else:
             return jsonify({"error": "Neo4j driver not initialized"}), 500
     except Exception as e:
