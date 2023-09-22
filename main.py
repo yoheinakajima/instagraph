@@ -9,7 +9,7 @@ import networkx as nx
 from neo4j import GraphDatabase
 from flask import Flask, jsonify, render_template, request
 from dotenv import load_dotenv
-import instructor 
+import instructor
 from models import KnowledgeGraph
 import time
 
@@ -33,8 +33,11 @@ if neo4j_username and neo4j_password and neo4j_url:
     neo4j_driver = GraphDatabase.driver(
         neo4j_url, auth=(neo4j_username, neo4j_password))
     with neo4j_driver.session() as session:
-        session.run("RETURN 1")
-        print("Neo4j database connected successfully!")
+        try:
+            session.run("RETURN 1")
+            print("Neo4j database connected successfully!")
+        except ValueError as ve:
+            print("Neo4j database: {}".format(ve))
 
 # Function to scrape text from a website
 
@@ -50,6 +53,8 @@ def scrape_text_from_url(url):
     return text
 
 # Check sub/user plan before making a request
+
+
 def make_request(request_body):
     if check_if_free_plan():
         time.sleep(20)
@@ -57,31 +62,64 @@ def make_request(request_body):
     return response
 
 # Function to check user plan
+
+
 def check_if_free_plan():
-    return user_plan == 'free'
+    """
+    receive USER_PLAN from .env.
+    Added default None, as this project won't be in free plan in production mode.
+
+    Returns:
+        bool: _description_
+    """
+    return os.environ.get("USER_PLAN", None) == "free"
 
 # Rate limiting
+
+
 @app.after_request
 def add_header(response):
+    """
+    add response header if free plan.
+
+    Args:
+        response (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     if check_if_free_plan():
         response.headers['Retry-After'] = 20
     return response
 
-# Handling 429 error
-@app.errorhandler(429) 
+
+@app.errorhandler(429)
 def too_many_requests(e):
+    """
+    rate throttling handler for free user.
+
+    Args:
+        e (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     time.sleep(20)
     return make_request(request.json)
 
-def correct_json(response_data):
+
+def correct_json(json_str):
     """
     Corrects the JSON response from OpenAI to be valid JSON
     """
-    response_data = re.sub(
-        r',\s*}', '}',
-        re.sub(r',\s*]', ']',
-               re.sub(r'(\w+)\s*:', r'"\1":', response_data)))
-    return response_data
+    sanitized_str = re.sub(r',\s*}', '}', json_str)
+    sanitized_str = re.sub(r',\s*]', ']', sanitized_str)
+
+    try:
+        return json.loads(sanitized_str)
+    except json.JSONDecodeError as e:
+        print("SantizationError: {}".format(e))
+        return None
 
 
 @app.route("/get_response_data", methods=["POST"])
@@ -101,9 +139,9 @@ def get_response_data():
                 }
             ],
             response_model=KnowledgeGraph,
-        ) # type: ignore
+        )
 
-        # Its now a dict, no need to worry about json loading so many times 
+        # Its now a dict, no need to worry about json loading so many times
         response_data = completion.model_dump()
     except openai.error.RateLimitError as e:
         # request limit exceeded or something.
@@ -113,14 +151,6 @@ def get_response_data():
         # general exception handling
         print(e)
         return jsonify({"error": "".format(e)}), 400
-
-
-    response_data = completion.model_dump()
-    total_tokens_used = completion.usage["total_tokens"]
-    print(f"total_tokens_used: {total_tokens_used}")
-    response_data = correct_json(response_data)
-    
-    # print(response_data)
 
     try:
         if neo4j_driver:
@@ -140,7 +170,7 @@ def get_response_data():
 
                 r.color = rel.color,
                 r.timestamp = timestamp();
-            """, {"rels": json.loads(response_data)['edges']})
+            """, {"rels": response_data['edges']})
 
     except json.decoder.JSONDecodeError as jde:
         return jsonify({"Error": "{}".format(jde)}), 500
