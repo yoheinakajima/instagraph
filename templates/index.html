@@ -28,16 +28,20 @@
 </head>
 <body class="flex flex-col items-start p-6 gap-6 h-screen bg-gray-100">
     <h1 class="sr-only">Instagraph</h1>
-<form id="inputForm" class="flex flex-col md:flex-row items-start md:items-center p-6 gap-2 md:gap-6 self-stretch rounded-md bg-white">
-    <div class="mb-2 md:mb-0 w-full md:w-auto">
-        <label for="userInput" class="block">
-            <span class="text-2xl font-medium">Ask a question</span><br>
-            <span class="text-base text-gray-500">Text or URL</span>
-        </label>
-        <input type="text" id="userInput" class="w-full p-2 border rounded-md" />
-    </div>
-    <input type="submit" value="Submit" class="py-2 px-4 bg-blue-500 text-white rounded cursor-pointer" />
-</form>
+
+    <form id="inputForm" class="flex flex-col md:flex-row items-start md:items-center p-6 gap-2 md:gap-6 self-stretch rounded-md bg-white">
+        <div class="mb-2 md:mb-0 w-full md:w-auto">
+            <label for="userInput" class="block">
+                <span class="text-2xl font-medium">Ask a question</span><br>
+                <span class="text-base text-gray-500">Text or URL</span>
+            </label>
+        </div>
+        <div class="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+            <input type="text" id="userInput" class="w-full p-2 border rounded-md" />
+            <input type="submit" value="Submit" class="py-2 px-4 bg-blue-500 text-white rounded cursor-pointer" />
+        </div>
+    </form>
+
     <div id="load" class="w-full h-3 bg-white rounded-md" style="display: none;"></div>
 
     <div class="flex flex-col md:flex-row flex-start gap-6 flex-1 self-stretch">
