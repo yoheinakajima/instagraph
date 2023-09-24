@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 from graphviz import Digraph
 import networkx as nx
 from neo4j import GraphDatabase
+from neo4j.exceptions import ServiceUnavailable, CypherSyntaxError, CypherTypeError
 from flask import Flask, jsonify, render_template, request
 from dotenv import load_dotenv
 import instructor
@@ -110,16 +111,19 @@ def too_many_requests(e):
 
 def correct_json(json_str):
     """
-    Corrects the JSON response from OpenAI to be valid JSON
+    Corrects the JSON response from OpenAI to be valid JSON by removing trailing commas
     """
-    sanitized_str = re.sub(r',\s*}', '}', json_str)
-    sanitized_str = re.sub(r',\s*]', ']', sanitized_str)
+    while ',\s*}' in json_str or ',\s*]' in json_str:
+        json_str = re.sub(r',\s*}', '}', json_str)
+        json_str = re.sub(r',\s*]', ']', json_str)
 
     try:
-        return json.loads(sanitized_str)
+        return json.loads(json_str)
     except json.JSONDecodeError as e:
-        print("SantizationError: {}".format(e))
+        print("SanitizationError:", e, "for JSON:", json_str)
         return None
+
+
 
 
 @app.route("/get_response_data", methods=["POST"])
@@ -143,6 +147,14 @@ def get_response_data():
 
         # Its now a dict, no need to worry about json loading so many times
         response_data = completion.model_dump()
+      
+        print("Raw OpenAI Response:", response_data)
+      
+        #response_data = correct_json(response_data)
+        # Fixing 'from_' to 'from' in the edges
+        for edge in response_data['edges']:
+            edge['from'] = edge.pop('from_')
+
     except openai.error.RateLimitError as e:
         # request limit exceeded or something.
         print(e)
@@ -152,29 +164,42 @@ def get_response_data():
         print(e)
         return jsonify({"error": "".format(e)}), 400
 
+    # Assuming you have the correct neo4j_driver instance.
+    
     try:
         if neo4j_driver:
+            print(response_data)
             # Import nodes
-            neo4j_driver.execute_query("""
-            UNWIND $nodes AS node
-            MERGE (n:Node {id:toLower(node.id)})
-            SET n.type = node.type, n.label = node.label, n.color = node.color""",
-                                       {"nodes": response_data['nodes']})
+            results = neo4j_driver.execute_query(
+                """
+                UNWIND $nodes AS node
+                MERGE (n:Node {id: node.id})
+                SET n.type = node.type, n.label = node.label, n.color = node.color
+                """,
+                {"nodes": response_data['nodes']}
+            )
+            print("Results from Neo4j:", results)
+            #print(f"Created {summary.counters.updates().nodesCreated} nodes.")
             # Import relationships
-            neo4j_driver.execute_query("""
-            UNWIND $rels AS rel
-            MATCH (s:Node {id: toLower(rel.from)})
-            MATCH (t:Node {id: toLower(rel.to)})
-            MERGE (s)-[r:RELATIONSHIP {type:rel.relationship}]->(t)
-            SET r.direction = rel.direction,
-
-                r.color = rel.color,
-                r.timestamp = timestamp();
-            """, {"rels": response_data['edges']})
-
-    except json.decoder.JSONDecodeError as jde:
-        return jsonify({"Error": "{}".format(jde)}), 500
-
+            results = neo4j_driver.execute_query(
+                """
+                UNWIND $rels AS rel
+                MATCH (s:Node {id: rel.from})
+                MATCH (t:Node {id: rel.to})
+                MERGE (s)-[r:RELATIONSHIP {type:rel.relationship}]->(t)
+                SET r.direction = rel.direction,
+                    r.color = rel.color,
+                    r.timestamp = timestamp();
+                """,
+                {"rels": response_data['edges']}
+            )
+            #print(f"Created {summary.counters.updates().relationshipsCreated} relationships.")
+            print("Results from Neo4j:", results)
+            
+    except Exception as e:
+        print("An error occurred during the Neo4j operation:", e)
+        return jsonify({"error": "An error occurred during the Neo4j operation: {}".format(e)}), 500
+    
     return response_data, 200
 
 
@@ -320,4 +345,4 @@ def index():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+    app.run(host="0.0.0.0",port=8080)
