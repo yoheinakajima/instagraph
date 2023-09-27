@@ -8,6 +8,7 @@ import networkx as nx
 from neo4j import GraphDatabase
 from flask import Flask, jsonify, render_template, request
 from dotenv import load_dotenv
+import wikipedia
 
 load_dotenv()
 
@@ -219,6 +220,46 @@ def get_graph_data():
         return jsonify({"elements": {"nodes": nodes, "edges": edges}})
     except:
         return jsonify({"elements": {"nodes": [], "edges": []}})
+
+
+@app.route("/get_wikipedia_info/<node_label>", methods=["GET"])
+def get_wikipedia_info(node_label):
+    if not node_label:
+        return jsonify({"summary": "", "link": ""})
+
+    try:
+        # Use the Wikipedia library to fetch summary and link
+        summary = wikipedia.summary(node_label, sentences=2)
+        link = wikipedia.page(node_label).url
+        return jsonify({"summary": summary, "link": link})
+    except wikipedia.exceptions.DisambiguationError as e:
+        # Handle disambiguation pages if necessary
+        print(e.options)
+    except wikipedia.exceptions.HTTPTimeoutError as e:
+        print("HTTPTimeoutError:", e)
+    except wikipedia.exceptions.PageError as e:
+        print("PageError:", e)
+
+    return jsonify({"summary": "", "link": ""})
+
+
+@app.route("/node_clicked/<node_label>", methods=["GET"])
+def node_clicked(node_label):
+    if not node_label:
+        return jsonify({"message": "No node label provided"})
+
+    # Fetch Wikipedia information for the clicked node
+    wikipedia_info = requests.get(f"/get_wikipedia_info/{node_label}").json()
+
+    if wikipedia_info.get("summary"):
+        print("Wikipedia Summary:")
+        print(wikipedia_info["summary"])
+        print("Wikipedia Link:")
+        print(wikipedia_info["link"])
+    else:
+        print("Wikipedia information not available.")
+
+    return jsonify({"message": "Node click event processed"})
 
 
 @app.route("/")
