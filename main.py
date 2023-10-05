@@ -2,6 +2,7 @@ import os
 import json
 import re
 import openai
+import litellm
 import requests
 from bs4 import BeautifulSoup
 from graphviz import Digraph
@@ -20,7 +21,7 @@ load_dotenv()
 app = Flask(__name__)
 
 # Set your OpenAI API key
-openai.api_key = os.getenv("OPENAI_API_KEY")
+litellm.api_key = os.getenv("OPENAI_API_KEY")
 response_data = ""
 
 # If Neo4j credentials are set, then Neo4j is used to store information
@@ -130,7 +131,7 @@ def get_response_data():
         return jsonify({"error": "No input provided"}), 400
     print("starting openai call")
     try:
-        completion: KnowledgeGraph = openai.ChatCompletion.create(
+        completion: KnowledgeGraph = litellm.completion(
             model="gpt-3.5-turbo-16k",
             messages=[
                 {
