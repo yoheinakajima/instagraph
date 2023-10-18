@@ -285,7 +285,7 @@ def get_graph_history():
 
             return jsonify({"graph_history": graph_history, "remaining": remaining, "neo4j": True})
         else:
-            return jsonify({"graph_history": [], "error": "Neo4j driver not initialized", "neo4j": True})
+            return jsonify({"graph_history": [], "error": "Neo4j driver not initialized", "neo4j": False})
     except Exception as e:
         return jsonify({"error": str(e), "neo4j": neo4j_driver is not None}), 500
 
