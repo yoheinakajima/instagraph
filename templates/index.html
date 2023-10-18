@@ -4,6 +4,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.16/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.19.0/cytoscape.min.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <title>Instagraph</title>
     <style>
         .loading {
@@ -45,215 +46,219 @@
     </div>
 
     <script>
-      const calcNodeWidth = (label) => {
-        // null checker added
-        // @author shepherd-06
-        if (label === null || label === undefined) {
-          return "50px";
-        }
-        return Math.max(50, label.length * 8) + "px";
-      };
-      const load = document.getElementById("load");
+      const { createApp, ref, computed } = Vue
+    
+      createApp({
+        setup() {
+          const calcNodeWidth = (label) => {
+            // null checker added
+            // @author shepherd-06
+            if (label === null || label === undefined) {
+              return "50px";
+            }
+            return Math.max(50, label.length * 8) + "px";
+          };
+          const load = document.getElementById("load");
 
-      /**
-       * Handles form submission, fetches data, and updates the UI.
-       *
-       * @refactored-by shepherd-06
-       *
-       * @param {Event} e - The submit event object.
-       */
-      async function handleFormSubmit(e) {
-        e.preventDefault();
-        const load = document.getElementById("load"); // assuming load is an element with id 'load'
-        load.style.display = "block"; // show the load div
-        load.classList.add("loading");
+          /**
+           * Handles form submission, fetches data, and updates the UI.
+           *
+           * @refactored-by shepherd-06
+           *
+           * @param {Event} e - The submit event object.
+           */
+          async function handleFormSubmit(e) {
+            e.preventDefault();
+            const load = document.getElementById("load"); // assuming load is an element with id 'load'
+            load.style.display = "block"; // show the load div
+            load.classList.add("loading");
+            
+            const userInput = document.getElementById("userInput").value;
+            const payload = { user_input: userInput };
 
-        const userInput = document.getElementById("userInput").value;
-        const payload = { user_input: userInput };
-
-        try {
-          const response = await postData("/get_response_data", payload);
-          const graphData = await postData("/get_graph_data");
-          load.classList.remove("loading");
-          load.style.display = "none"; // hide the load div
-
-          // Check if graphData is an empty dictionary
-          if (Object.keys(graphData).length === 0) {
-            console.error("graphData is empty");
-            return;
-          } else {
-            await createGraph(graphData);
+            try {
+              const response = await postData("/get_response_data", payload);
+              const graphData = await postData("/get_graph_data");
+              load.classList.remove("loading");
+              load.style.display = "none"; // hide the load div
+              
+              // Check if graphData is an empty dictionary
+              if (Object.keys(graphData).length === 0) {
+                console.error("graphData is empty");
+                return;
+              } else {
+                await createGraph(graphData);
+              }
+            } catch (error) {
+              load.classList.remove("loading");
+              load.style.display = "none"; // hide the load div
+              console.error("Fetch Error:", error);
+              showError("Fetch Error: " + error);
+              return;
+            }
           }
-        } catch (error) {
-          load.classList.remove("loading");
-          load.style.display = "none"; // hide the load div
-          console.error("Fetch Error:", error);
-          showError("Fetch Error: " + error);
-          return;
-        }
-      }
+          
+          /**
+           * Asynchronously sends a POST request to the specified URL with the given payload.
+           *
+           * @async
+           * @updatedBy shepherd-06
+           * @param {string} url - The URL to which the POST request will be sent.
+           * @param {Object} [data={}] - The payload that will be sent in the request body, represented as a JavaScript object. Optional.
+           *
+           * @throws Will throw an error if the response status is not OK.
+           * @returns {Promise<Object>} - A Promise that resolves to the JSON-parsed response from the server.
+           */
+          async function postData(url, data = {}) {
+            const response = await fetch(url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(data),
+            });
+            
+            if (!response.ok) throw new Error(await response.text());
 
-      /**
-       * Asynchronously sends a POST request to the specified URL with the given payload.
-       *
-       * @async
-       * @updatedBy shepherd-06
-       * @param {string} url - The URL to which the POST request will be sent.
-       * @param {Object} [data={}] - The payload that will be sent in the request body, represented as a JavaScript object. Optional.
-       *
-       * @throws Will throw an error if the response status is not OK.
-       * @returns {Promise<Object>} - A Promise that resolves to the JSON-parsed response from the server.
-       */
-      async function postData(url, data = {}) {
-        const response = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        });
+            return await response.json();
+          }
 
-        if (!response.ok) throw new Error(await response.text());
-
-        return await response.json();
-      }
-
-      /**
-       * Asynchronously initializes and renders a graph using the Cytoscape library.
-       *
-       * @async
-       * @updatedBy shepherd-06
-       * @param {Object} data - An object containing the elements (nodes and edges) for the Cytoscape graph.
-       *
-       * @example
-       * const graphData = {
-       *   elements: {
-       *     nodes: [...],
-       *     edges: [...]
-       *   }
-       * };
-       * await createGraph(graphData);
-       *
-       * @throws Will throw an error if the Cytoscape initialization fails.
-       *
-       * @description
-       * The function takes in a `data` object, which includes the graph elements like nodes and edges.
-       * It then sets up various graph configurations, such as node styles, edge styles, and layout options.
-       * Finally, it calls Cytoscape to render the graph within an HTML element with the id "cy".
-       */
-      async function createGraph(data) {
-        cytoscape({
-          container: document.getElementById("cy"),
-          elements: data.elements,
-          style: [
-            {
-              selector: "node",
-              style: {
-                "background-color": "data(color)",
-                label: "data(label)",
-                "text-valign": "center",
-                "text-halign": "center",
-                shape: "rectangle",
-                height: "50px",
-                width: (ele) => calcNodeWidth(ele.data("label")),
-                color: function (ele) {
-                  return getTextColor(ele.data("color"));
+          /**
+           * Asynchronously initializes and renders a graph using the Cytoscape library.
+           *
+           * @async
+           * @updatedBy shepherd-06
+           * @param {Object} data - An object containing the elements (nodes and edges) for the Cytoscape graph.
+           *
+           * @example
+           * const graphData = {
+           *   elements: {
+           *     nodes: [...],
+           *     edges: [...]
+           *   }
+           * };
+           * await createGraph(graphData);
+           *
+           * @throws Will throw an error if the Cytoscape initialization fails.
+           *
+           * @description
+           * The function takes in a `data` object, which includes the graph elements like nodes and edges.
+           * It then sets up various graph configurations, such as node styles, edge styles, and layout options.
+           * Finally, it calls Cytoscape to render the graph within an HTML element with the id "cy".
+           */
+          async function createGraph(data) {
+            cytoscape({
+              container: document.getElementById("cy"),
+              elements: data.elements,
+              style: [
+                {
+                  selector: "node",
+                  style: {
+                    "background-color": "data(color)",
+                    label: "data(label)",
+                    "text-valign": "center",
+                    "text-halign": "center",
+                    shape: "rectangle",
+                    height: "50px",
+                    width: (ele) => calcNodeWidth(ele.data("label")),
+                    color: function (ele) {
+                      return getTextColor(ele.data("color"));
+                    },
+                    "font-size": "12px",
+                  },
                 },
-                "font-size": "12px",
+                {
+                  selector: "edge",
+                  style: {
+                    width: 3,
+                    "line-color": "data(color)",
+                    "target-arrow-color": "data(color)",
+                    "target-arrow-shape": "triangle",
+                    label: "data(label)",
+                    "curve-style": "unbundled-bezier",
+                    "line-dash-pattern": [4, 4],
+                    "text-background-color": "#ffffff",
+                    "text-background-opacity": 1,
+                    "text-background-shape": "rectangle",
+                    "font-size": "10px",
+                  },
+                },
+              ],
+              layout: {
+                name: "cose",
+                fit: true,
+                padding: 30,
+                avoidOverlap: true,
               },
-            },
-            {
-              selector: "edge",
-              style: {
-                width: 3,
-                "line-color": "data(color)",
-                "target-arrow-color": "data(color)",
-                "target-arrow-shape": "triangle",
-                label: "data(label)",
-                "curve-style": "unbundled-bezier",
-                "line-dash-pattern": [4, 4],
-                "text-background-color": "#ffffff",
-                "text-background-opacity": 1,
-                "text-background-shape": "rectangle",
-                "font-size": "10px",
+              
+              ready: function () {
+                this.fit(); // Fits all elements in the viewport
+                this.center(); // Centers the graph in the viewport
               },
-            },
-          ],
-          layout: {
-            name: "cose",
-            fit: true,
-            padding: 30,
-            avoidOverlap: true,
-          },
-
-          ready: function () {
-            this.fit(); // Fits all elements in the viewport
-            this.center(); // Centers the graph in the viewport
-          },
-        });
-      }
-
-      /**
-       * Calculates the optimal text color (either white or black) based on the given background color.
-       *
-       * @updatedBy shepherd-06
-       * @param {string} [bgColor="#000000"] - The background color in hexadecimal format (e.g., "#FFFFFF"). Optional.
-       *
-       * @returns {string} The optimal text color ("#ffffff" for white or "#000000" for black).
-       *
-       * @example
-       * const textColor = getTextColor("#FFFFFF"); // returns "#000000" (black)
-       */
-      function getTextColor(bgColor = "#000000") {
-        let brightness;
-        if (bgColor === null || bgColor === undefined) {
-          // Default brightness value when bgColor is null or undefined
-          brightness = 0;
-        } else {
-          bgColor = bgColor.replace("#", "");
-          const [r, g, b] = [0, 2, 4].map((start) =>
-            parseInt(bgColor.substr(start, 2), 16)
-          );
-          brightness = r * 0.299 + g * 0.587 + b * 0.114;
-        }
-        return brightness < 40 ? "#ffffff" : "#000000";
-      }
-
-      /**
-       * Asynchronously fetches and displays the graph history from a server endpoint.
-       *
-       * @async
-       * @author shepherd-06
-       *
-       * @example
-       * await fetchGraphHistory();
-       *
-       * @throws Will log an error to the console if fetching fails or the network response is not ok.
-       *
-       * @description
-       * This function makes an asynchronous GET request to the "/get_graph_history" endpoint to fetch the graph history data.
-       * Upon successful retrieval, the function iteratively populates a div element with an id of "history" with the fetched data.
-       * If the network response is not ok, an error message will be displayed in the div.
-       * If fetching fails, an error will be logged to the console and an error message will be displayed in the div.
-       */
-      async function fetchGraphHistory() {
-        try {
-          const response = await fetch("/get_graph_history", {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          });
-
-          if (!response.ok) {
-            showError("Network response was not ok " + response.statusText);
-            return;
+            });
           }
+          
+          /**
+           * Calculates the optimal text color (either white or black) based on the given background color.
+           *
+           * @updatedBy shepherd-06
+           * @param {string} [bgColor="#000000"] - The background color in hexadecimal format (e.g., "#FFFFFF"). Optional.
+           *
+           * @returns {string} The optimal text color ("#ffffff" for white or "#000000" for black).
+           *
+           * @example
+           * const textColor = getTextColor("#FFFFFF"); // returns "#000000" (black)
+           */
+          function getTextColor(bgColor = "#000000") {
+            let brightness;
+            if (bgColor === null || bgColor === undefined) {
+              // Default brightness value when bgColor is null or undefined
+              brightness = 0;
+            } else {
+              bgColor = bgColor.replace("#", "");
+              const [r, g, b] = [0, 2, 4].map((start) =>
+                parseInt(bgColor.substr(start, 2), 16)
+              );
+              brightness = r * 0.299 + g * 0.587 + b * 0.114;
+            }
+            return brightness < 40 ? "#ffffff" : "#000000";
+          }
+          
+          /**
+           * Asynchronously fetches and displays the graph history from a server endpoint.
+           *
+           * @async
+           * @author shepherd-06
+           *
+           * @example
+           * await fetchGraphHistory();
+           *
+           * @throws Will log an error to the console if fetching fails or the network response is not ok.
+           *
+           * @description
+           * This function makes an asynchronous GET request to the "/get_graph_history" endpoint to fetch the graph history data.
+           * Upon successful retrieval, the function iteratively populates a div element with an id of "history" with the fetched data.
+           * If the network response is not ok, an error message will be displayed in the div.
+           * If fetching fails, an error will be logged to the console and an error message will be displayed in the div.
+           */
+          async function fetchGraphHistory() {
+            try {
+              const response = await fetch("/get_graph_history", {
+                method: "GET",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              });
 
-          const { graph_history } = await response.json();
+              if (!response.ok) {
+                showError("Network response was not ok " + response.statusText);
+                return;
+              }
 
-          const graphHistoryDiv = document.getElementById("history");
+              const { graph_history } = await response.json();
 
-          graph_history.forEach((item, index) => {
-            graphHistoryDiv.innerHTML += `
+              const graphHistoryDiv = document.getElementById("history");
+
+              graph_history.forEach((item, index) => {
+                graphHistoryDiv.innerHTML += `
               <div class="bg-gray-200 hover:bg-gray-300 p-5 rounded" onclick="handleGraphItemClick(event)" data-item='${JSON.stringify(
                 item
               )}'>
@@ -265,117 +270,124 @@
             }) 
                 - To: ${item.to_node.label} (Type: ${item.to_node.type})</p>
               </div>`;
+              });
+            } catch (error) {
+              console.error("Error fetching graph history:", error);
+              const graphHistoryDiv = document.getElementById("history");
+              graphHistoryDiv.innerHTML += `<p> Error fetching graph history: ${error}<p>`;
+              return;
+            }
+          }
+
+          /**
+           * Displays an error message in a designated HTML element and hides it after 5 seconds.
+           *
+           * @author shepherd-06
+           *
+           * @param {string} message - The error message to be displayed.
+           */
+          function showError(message) {
+            document.getElementById("error-text").textContent = message;
+            const errorDiv = document.getElementById("error-message");
+            errorDiv.style.display = "flex";
+            setTimeout(() => {
+              errorDiv.style.display = "none";
+            }, 5000);
+          }
+
+          /**
+           * Handles a click event on a graph history item and displays it as a graph.
+           *
+           * @param {Event} event - The click event object.
+           *
+           * @author shepherd-06
+           *
+           * @example
+           * handleGraphItemClick(event);
+           *
+           * @description
+           * This function takes a click event object and retrieves an attribute "data-item" that contains the graph history data.
+           * It then transforms this data using transformDataToGraphFormat() and displays it using createGraph().
+           */
+          function handleGraphItemClick(event) {
+            const itemData = JSON.parse(
+              event.currentTarget.getAttribute("data-item")
+            );
+            const transformedData = transformDataToGraphFormat(itemData);
+
+            createGraph(transformedData);
+          }
+
+          /**
+           * Transforms the graph history data to a format suitable for creating a graph using the createGraph function.
+           *
+           * @param {Object} itemData - The graph history data.
+           *
+           * @returns {Object} An object containing elements suitable for the createGraph function.
+           *
+           * @author shepherd-06
+           *
+           * @example
+           * const transformedData = transformDataToGraphFormat(itemData);
+           *
+           * @description
+           * This function takes an object containing graph history data and transforms it into a format suitable for graph rendering.
+           * The transformed object contains nodes and edges with all the necessary attributes.
+           */
+          function transformDataToGraphFormat(itemData) {
+            /**
+             * Transforms the graph history data to a format suitable for creating a graph using the createGraph function.
+             *
+             * @author shepherd-06
+             **/
+            return {
+              elements: {
+                edges: [
+                  {
+                    data: {
+                      color: itemData.relationship.color,
+                      label: itemData.relationship.type,
+                      source: itemData.from_node.id,
+                      target: itemData.to_node.id,
+                    },
+                  },
+                ],
+                nodes: [
+                  {
+                    data: {
+                      id: itemData.from_node.id,
+                      label: itemData.from_node.label,
+                      type: itemData.from_node.type,
+                      color: itemData.from_node.color,
+                    },
+                  },
+                  {
+                    data: {
+                      id: itemData.to_node.id,
+                      label: itemData.to_node.label,
+                      type: itemData.to_node.type,
+                      color: itemData.to_node.color,
+                    },
+                  },
+                ],
+              },
+            };
+          }
+
+          const form = document.getElementById("inputForm");
+          form.addEventListener("submit", handleFormSubmit);
+
+          document.addEventListener("DOMContentLoaded", fetchGraphHistory);
+          document.getElementById("error-close").addEventListener("click", () => {
+            document.getElementById("error-message").style.display = "none";
           });
-        } catch (error) {
-          console.error("Error fetching graph history:", error);
-          const graphHistoryDiv = document.getElementById("history");
-          graphHistoryDiv.innerHTML += `<p> Error fetching graph history: ${error}<p>`;
-          return;
-        }
-      }
-
-      /**
-       * Displays an error message in a designated HTML element and hides it after 5 seconds.
-       *
-       * @author shepherd-06
-       *
-       * @param {string} message - The error message to be displayed.
-       */
-      function showError(message) {
-        document.getElementById("error-text").textContent = message;
-        const errorDiv = document.getElementById("error-message");
-        errorDiv.style.display = "flex";
-        setTimeout(() => {
-          errorDiv.style.display = "none";
-        }, 5000);
-      }
-
-      /**
-       * Handles a click event on a graph history item and displays it as a graph.
-       *
-       * @param {Event} event - The click event object.
-       *
-       * @author shepherd-06
-       *
-       * @example
-       * handleGraphItemClick(event);
-       *
-       * @description
-       * This function takes a click event object and retrieves an attribute "data-item" that contains the graph history data.
-       * It then transforms this data using transformDataToGraphFormat() and displays it using createGraph().
-       */
-      function handleGraphItemClick(event) {
-        const itemData = JSON.parse(
-          event.currentTarget.getAttribute("data-item")
-        );
-        const transformedData = transformDataToGraphFormat(itemData);
-
-        createGraph(transformedData);
-      }
-
-      /**
-       * Transforms the graph history data to a format suitable for creating a graph using the createGraph function.
-       *
-       * @param {Object} itemData - The graph history data.
-       *
-       * @returns {Object} An object containing elements suitable for the createGraph function.
-       *
-       * @author shepherd-06
-       *
-       * @example
-       * const transformedData = transformDataToGraphFormat(itemData);
-       *
-       * @description
-       * This function takes an object containing graph history data and transforms it into a format suitable for graph rendering.
-       * The transformed object contains nodes and edges with all the necessary attributes.
-       */
-      function transformDataToGraphFormat(itemData) {
-        /**
-         * Transforms the graph history data to a format suitable for creating a graph using the createGraph function.
-         *
-         * @author shepherd-06
-         **/
-        return {
-          elements: {
-            edges: [
-              {
-                data: {
-                  color: itemData.relationship.color,
-                  label: itemData.relationship.type,
-                  source: itemData.from_node.id,
-                  target: itemData.to_node.id,
-                },
-              },
-            ],
-            nodes: [
-              {
-                data: {
-                  id: itemData.from_node.id,
-                  label: itemData.from_node.label,
-                  type: itemData.from_node.type,
-                  color: itemData.from_node.color,
-                },
-              },
-              {
-                data: {
-                  id: itemData.to_node.id,
-                  label: itemData.to_node.label,
-                  type: itemData.to_node.type,
-                  color: itemData.to_node.color,
-                },
-              },
-            ],
+          return {
+          }
           },
-        };
-      }
+        delimiters: ['[[', ']]']
 
-      const form = document.getElementById("inputForm");
-      form.addEventListener("submit", handleFormSubmit);
-
-      document.addEventListener("DOMContentLoaded", fetchGraphHistory);
-      document.getElementById("error-close").addEventListener("click", () => {
-        document.getElementById("error-message").style.display = "none";
-      });
+      }).mount('#app')
+          
     </script>
   </body>
 </html>
