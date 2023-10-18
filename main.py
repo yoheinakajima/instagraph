@@ -283,11 +283,11 @@ def get_graph_history():
             graph_history = [process_graph_data(record) for record in result]
             remaining = max(0, total_count - skip - per_page)
 
-            return jsonify({"graph_history": graph_history, "remaining": remaining})
+            return jsonify({"graph_history": graph_history, "remaining": remaining, "neo4j": True})
         else:
-            return jsonify({"error": "Neo4j driver not initialized"}), 500
+            return jsonify({"graph_history": [], "error": "Neo4j driver not initialized", "neo4j": False})
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": str(e), "neo4j": neo4j_driver is not None}), 500
 
 
 def process_graph_data(record):
