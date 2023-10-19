@@ -177,30 +177,39 @@ def get_response_data():
     try:
         if neo4j_driver:
             # Import nodes
-            neo4j_driver.execute_query(
+            results = neo4j_driver.execute_query(
                 """
-            UNWIND $nodes AS node
-            MERGE (n:Node {id:toLower(node.id)})
-            SET n.type = node.type, n.label = node.label, n.color = node.color""",
+                UNWIND $nodes AS node
+                MERGE (n:Node {id: node.id})
+                SET n.type = node.type, n.label = node.label, n.color = node.color
+                """,
                 {"nodes": response_data["nodes"]},
             )
+            print("Results from Neo4j:", results)
             # Import relationships
-            neo4j_driver.execute_query(
+            results = neo4j_driver.execute_query(
                 """
-            UNWIND $rels AS rel
-            MATCH (s:Node {id: toLower(rel.from)})
-            MATCH (t:Node {id: toLower(rel.to)})
-            MERGE (s)-[r:RELATIONSHIP {type:rel.relationship}]->(t)
-            SET r.direction = rel.direction,
-
-                r.color = rel.color,
-                r.timestamp = timestamp();
-            """,
+                UNWIND $rels AS rel
+                MATCH (s:Node {id: rel.from})
+                MATCH (t:Node {id: rel.to})
+                MERGE (s)-[r:RELATIONSHIP {type:rel.relationship}]->(t)
+                SET r.direction = rel.direction,
+                    r.color = rel.color,
+                    r.timestamp = timestamp();
+                """,
                 {"rels": response_data["edges"]},
             )
+            # print(f"Created {summary.counters.updates().relationshipsCreated} relationships.")
+            print("Results from Neo4j:", results)
 
-    except json.decoder.JSONDecodeError as jde:
-        return jsonify({"Error": "{}".format(jde)}), 500
+    except Exception as e:
+        print("An error occurred during the Neo4j operation:", e)
+        return (
+            jsonify(
+                {"error": "An error occurred during the Neo4j operation: {}".format(e)}
+            ),
+            500,
+        )
 
     return response_data, 200
 
