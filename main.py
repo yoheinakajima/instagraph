@@ -2,7 +2,6 @@ import argparse
 import json
 import os
 import re
-import time
 
 import instructor
 import networkx as nx
@@ -61,16 +60,6 @@ def scrape_text_from_url(url):
     return text
 
 
-# Check sub/user plan before making a request
-
-
-def make_request(request_body):
-    if check_if_free_plan():
-        time.sleep(20)
-    response = api.create_completion(request_body)
-    return response
-
-
 # Function to check user plan
 
 
@@ -104,26 +93,11 @@ def add_header(response):
     return response
 
 
-@app.errorhandler(429)
-def too_many_requests(e):
-    """
-    rate throttling handler for free user.
-
-    Args:
-        e (_type_): _description_
-
-    Returns:
-        _type_: _description_
-    """
-    time.sleep(20)
-    return make_request(request.json)
-
-
 def correct_json(json_str):
     """
     Corrects the JSON response from OpenAI to be valid JSON by removing trailing commas
     """
-    while ",\s*}" in json_str or ",\s*]" in json_str:
+    while ",\s*}" in json_str or ",\s*]" in json_str:  # noqa: W605
         json_str = re.sub(r",\s*}", "}", json_str)
         json_str = re.sub(r",\s*]", "]", json_str)
 
@@ -168,11 +142,11 @@ def get_response_data():
     except openai.error.RateLimitError as e:
         # request limit exceeded or something.
         print(e)
-        return jsonify({"error": "".format(e)}), 429
+        return jsonify({"error": "rate limitation"}), 429
     except Exception as e:
         # general exception handling
         print(e)
-        return jsonify({"error": "".format(e)}), 400
+        return jsonify({"error": "unknown error"}), 400
 
     try:
         if neo4j_driver:
@@ -291,7 +265,7 @@ def get_graph_data():
                 for edge in response_dict["edges"]
             ]
         return jsonify({"elements": {"nodes": nodes, "edges": edges}})
-    except:
+    except Exception:
         return jsonify({"elements": {"nodes": [], "edges": []}})
 
 
