@@ -38,13 +38,23 @@
             <input type="text" class="flex-grow p-2 border rounded-md" v-model="userInput" />
             <input type="submit" value="Submit" class="py-2 px-4 bg-blue-500 text-white rounded cursor-pointer" />
         </form>
-        <div class="w-full h-3 bg-white rounded-md" :class="isLoading ? 'loading block' : 'hidden'"></div>
+        <div class="w-full h-3 bg-white rounded-md" :class="isLoading ? 'loading block' : 'hidden'">
+          &nbsp;
+        </div>
 
         <div class="flex flex-col md:flex-row flex-start gap-6 flex-1 self-stretch">
             <div class="flex flex-grow bg-white p-6 rounded-md" ref="cyRef"></div>
             <div class="md:w-1/3 w-full max-w-xs bg-white rounded-md p-6">
                 <h2 class="mb-2 text-2xl">History</h2>
-                <div class="space-y-2 overflow-y-auto" id="history"></div>
+                <p v-if="historyError !==''"> Error fetching graph history: [[ historyError ]]</p>
+                <div class="space-y-2 overflow-y-auto" v-else>
+                  <div class="bg-gray-200 hover:bg-gray-300 p-5 rounded" @click="handleGraphItemClick(k)"
+                       v-for="(item, k) in graphHistory" :key="k">
+                    <p>[[ k + 1 ]]. From: [[ item.from_node.label ]] (Type: [[ item.from_node.type ]]) 
+                      - Relationship: [[ item.relationship.type ]] (Direction: [[ item.relationship.direction ]]) 
+                      - To: [[ item.to_node.label ]] (Type: [[ item.to_node.type ]])</p>
+                  </div>
+                </div>
             </div>
         </div>
     </div>
@@ -57,6 +67,9 @@
           const cyRef = ref();
           const userInput = ref("");
           const errorMessage = ref("");
+
+          const graphHistory = ref([]);
+          const historyError = ref("");
           
           const calcNodeWidth = (label) => {
             // null checker added
@@ -75,7 +88,6 @@
            */
           async function handleFormSubmit() {
             isLoading.value = true;
-            
             const payload = { user_input: userInput.value };
 
             try {
@@ -253,28 +265,15 @@
                 return;
               }
 
-              const { graph_history } = await response.json();
-
-              const graphHistoryDiv = document.getElementById("history");
-
-              graph_history.forEach((item, index) => {
-                graphHistoryDiv.innerHTML += `
-              <div class="bg-gray-200 hover:bg-gray-300 p-5 rounded" onclick="handleGraphItemClick(event)" data-item='${JSON.stringify(
-                item
-              )}'>
-                <p>${index + 1}. From: ${item.from_node.label} (Type: ${
-              item.from_node.type
-            }) 
-                - Relationship: ${item.relationship.type} (Direction: ${
-              item.relationship.direction
-            }) 
-                - To: ${item.to_node.label} (Type: ${item.to_node.type})</p>
-              </div>`;
-              });
+              const graph_response = await response.json();
+              if (!graph_response.neo4j) {
+                historyError.value = "no neo4j"
+                return;
+              }
+              graphHistory.value = graph_response.graph_history;
             } catch (error) {
               console.error("Error fetching graph history:", error);
-              const graphHistoryDiv = document.getElementById("history");
-              graphHistoryDiv.innerHTML += `<p> Error fetching graph history: ${error}<p>`;
+              historyError.value = error;
               return;
             }
           }
@@ -310,12 +309,9 @@
            * This function takes a click event object and retrieves an attribute "data-item" that contains the graph history data.
            * It then transforms this data using transformDataToGraphFormat() and displays it using createGraph().
            */
-          function handleGraphItemClick(event) {
-            const itemData = JSON.parse(
-              event.currentTarget.getAttribute("data-item")
-            );
+          function handleGraphItemClick(key) {
+            const itemData = graphHistory.value[key]
             const transformedData = transformDataToGraphFormat(itemData);
-
             createGraph(transformedData);
           }
 
@@ -383,9 +379,12 @@
             userInput,
             isLoading,
             errorMessage,
+            graphHistory,
             
             handleFormSubmit,
             closeErrorMessage,
+            handleGraphItemClick,
+            historyError,
           }
         },
         delimiters: ['[[', ']]']
