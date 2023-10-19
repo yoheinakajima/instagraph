@@ -35,8 +35,9 @@
                 <span class="text-2xl font-medium">Ask a question</span><br>
                 <span class="text-base text-gray-500">Text or URL</span>
             </label>
-            <input type="text" class="flex-grow p-2 border rounded-md" v-model="userInput" />
-            <input type="submit" value="Submit" class="py-2 px-4 bg-blue-500 text-white rounded cursor-pointer" />
+            <input type="text" class="flex-grow p-2 border rounded-md" v-model="userInput" :disabled="isLoading" />
+            <input type="submit" value="Submit" class="py-2 px-4 text-white rounded cursor-pointer"
+                   :class="isLoading ? 'bg-blue-200': 'bg-blue-500'" :disabled="isLoading" />
         </form>
         <div class="w-full h-3 bg-white rounded-md" :class="isLoading ? 'loading block' : 'hidden'">
           &nbsp;
