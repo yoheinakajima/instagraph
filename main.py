@@ -4,7 +4,6 @@ import os
 import re
 
 import instructor
-import networkx as nx
 import openai
 import requests
 from bs4 import BeautifulSoup
@@ -114,6 +113,9 @@ def get_response_data():
     user_input = request.json.get("user_input", "")
     if not user_input:
         return jsonify({"error": "No input provided"}), 400
+    if user_input.startswith("http"):
+        user_input = scrape_text_from_url(user_input)
+
     print("starting openai call")
     try:
         completion: KnowledgeGraph = openai.ChatCompletion.create(
