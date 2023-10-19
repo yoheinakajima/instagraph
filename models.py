@@ -24,7 +24,8 @@ class Node(BaseModel):
 
 
 class Edge(BaseModel):
-    from_: str = Field(..., alias="from", description="Origin node ID")
+    # WARING: Notice that this is "from_", not "from"
+    from_: str = Field(..., alias='from', description="Origin node ID")
     to: str = Field(..., description="Destination node ID")
     relationship: str = Field(..., description="Type of relationship between the nodes")
     direction: str = Field(..., description="Direction of the relationship")
