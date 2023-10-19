@@ -1,17 +1,19 @@
-import os
 import json
+import os
 import re
+import time
+
+import instructor
+import networkx as nx
 import openai
 import requests
 from bs4 import BeautifulSoup
-from graphviz import Digraph
-import networkx as nx
-from neo4j import GraphDatabase
-from flask import Flask, jsonify, render_template, request
 from dotenv import load_dotenv
-import instructor
+from flask import Flask, jsonify, render_template, request
+from graphviz import Digraph
+from neo4j import GraphDatabase
+
 from models import KnowledgeGraph
-import time
 
 instructor.patch()
 
@@ -35,7 +37,8 @@ neo4j_driver = None
 
 if neo4j_username and neo4j_password and neo4j_url:
     neo4j_driver = GraphDatabase.driver(
-        neo4j_url, auth=(neo4j_username, neo4j_password))
+        neo4j_url, auth=(neo4j_username, neo4j_password)
+    )
     with neo4j_driver.session() as session:
         try:
             session.run("RETURN 1")
@@ -56,6 +59,7 @@ def scrape_text_from_url(url):
     print("web scrape done")
     return text
 
+
 # Check sub/user plan before making a request
 
 
@@ -64,6 +68,7 @@ def make_request(request_body):
         time.sleep(20)
     response = api.create_completion(request_body)
     return response
+
 
 # Function to check user plan
 
@@ -77,6 +82,7 @@ def check_if_free_plan():
         bool: _description_
     """
     return os.environ.get("USER_PLAN", None) == "free"
+
 
 # Rate limiting
 
@@ -93,7 +99,7 @@ def add_header(response):
         _type_: _description_
     """
     if check_if_free_plan():
-        response.headers['Retry-After'] = 20
+        response.headers["Retry-After"] = 20
     return response
 
 
@@ -116,9 +122,9 @@ def correct_json(json_str):
     """
     Corrects the JSON response from OpenAI to be valid JSON by removing trailing commas
     """
-    while ',\s*}' in json_str or ',\s*]' in json_str:
-        json_str = re.sub(r',\s*}', '}', json_str)
-        json_str = re.sub(r',\s*]', ']', json_str)
+    while ",\s*}" in json_str or ",\s*]" in json_str:
+        json_str = re.sub(r",\s*}", "}", json_str)
+        json_str = re.sub(r",\s*]", "]", json_str)
 
     try:
         return json.loads(json_str)
@@ -150,11 +156,13 @@ def get_response_data():
         response_data = completion.model_dump()
 
         # copy "from_" prop to "from" prop on all edges
-        edges = response_data['edges']
+        edges = response_data["edges"]
+
         def _restore(e):
             e["from"] = e["from_"]
             return e
-        response_data['edges'] = [_restore(e) for e in edges]
+
+        response_data["edges"] = [_restore(e) for e in edges]
 
     except openai.error.RateLimitError as e:
         # request limit exceeded or something.
@@ -168,13 +176,16 @@ def get_response_data():
     try:
         if neo4j_driver:
             # Import nodes
-            neo4j_driver.execute_query("""
+            neo4j_driver.execute_query(
+                """
             UNWIND $nodes AS node
             MERGE (n:Node {id:toLower(node.id)})
             SET n.type = node.type, n.label = node.label, n.color = node.color""",
-                                       {"nodes": response_data['nodes']})
+                {"nodes": response_data["nodes"]},
+            )
             # Import relationships
-            neo4j_driver.execute_query("""
+            neo4j_driver.execute_query(
+                """
             UNWIND $rels AS rel
             MATCH (s:Node {id: toLower(rel.from)})
             MATCH (t:Node {id: toLower(rel.to)})
@@ -183,7 +194,9 @@ def get_response_data():
 
                 r.color = rel.color,
                 r.timestamp = timestamp();
-            """, {"rels": response_data['edges']})
+            """,
+                {"rels": response_data["edges"]},
+            )
 
     except json.decoder.JSONDecodeError as jde:
         return jsonify({"Error": "{}".format(jde)}), 500
@@ -221,22 +234,26 @@ def visualize_knowledge_graph_with_graphviz():
 def get_graph_data():
     try:
         if neo4j_driver:
-            nodes, _, _ = neo4j_driver.execute_query("""
+            nodes, _, _ = neo4j_driver.execute_query(
+                """
             MATCH (n)
             WITH collect(
                 {data: {id: n.id, label: n.label, color: n.color}}) AS node
             RETURN node
-            """)
-            nodes = [el['node'] for el in nodes][0]
+            """
+            )
+            nodes = [el["node"] for el in nodes][0]
 
-            edges, _, _ = neo4j_driver.execute_query("""
+            edges, _, _ = neo4j_driver.execute_query(
+                """
             MATCH (s)-[r]->(t)
             WITH collect(
                 {data: {source: s.id, target: t.id, label:r.type, color: r.color}}
             ) AS rel
             RETURN rel
-            """)
-            edges = [el['rel'] for el in edges][0]
+            """
+            )
+            edges = [el["rel"] for el in edges][0]
         else:
             global response_data
             # print(response_data)
@@ -271,34 +288,48 @@ def get_graph_data():
 @app.route("/get_graph_history", methods=["GET"])
 def get_graph_history():
     try:
-        page = request.args.get('page', default=1, type=int)
+        page = request.args.get("page", default=1, type=int)
         per_page = 10
         skip = (page - 1) * per_page
 
         if neo4j_driver:
             # Getting the total number of graphs
-            total_graphs, _, _ = neo4j_driver.execute_query("""
+            total_graphs, _, _ = neo4j_driver.execute_query(
+                """
             MATCH (n)-[r]->(m)
             RETURN count(n) as total_count
-            """)
-            total_count = total_graphs[0]['total_count']
+            """
+            )
+            total_count = total_graphs[0]["total_count"]
 
             # Fetching 10 most recent graphs
-            result, _, _ = neo4j_driver.execute_query("""
+            result, _, _ = neo4j_driver.execute_query(
+                """
             MATCH (n)-[r]->(m)
             RETURN n, r, m
             ORDER BY r.timestamp DESC
             SKIP {skip}
             LIMIT {per_page}
-            """.format(skip=skip, per_page=per_page))
+            """.format(
+                    skip=skip, per_page=per_page
+                )
+            )
 
             # Process the 'result' to format it as a list of graphs
             graph_history = [process_graph_data(record) for record in result]
             remaining = max(0, total_count - skip - per_page)
 
-            return jsonify({"graph_history": graph_history, "remaining": remaining, "neo4j": True})
+            return jsonify(
+                {"graph_history": graph_history, "remaining": remaining, "neo4j": True}
+            )
         else:
-            return jsonify({"graph_history": [], "error": "Neo4j driver not initialized", "neo4j": False})
+            return jsonify(
+                {
+                    "graph_history": [],
+                    "error": "Neo4j driver not initialized",
+                    "neo4j": False,
+                }
+            )
     except Exception as e:
         return jsonify({"error": str(e), "neo4j": neo4j_driver is not None}), 500
 
@@ -312,9 +343,9 @@ def process_graph_data(record):
     :return: A dictionary representing the graph data
     """
     try:
-        node_from = record['n'].items()
-        node_to = record['m'].items()
-        relationship = record['r'].items()
+        node_from = record["n"].items()
+        node_to = record["m"].items()
+        relationship = record["r"].items()
 
         graph_data = {
             "from_node": {key: value for key, value in node_from},
