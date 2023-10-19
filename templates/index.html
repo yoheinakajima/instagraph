@@ -65,17 +65,14 @@
             }
             return Math.max(50, label.length * 8) + "px";
           };
-          const load = document.getElementById("load");
 
           /**
            * Handles form submission, fetches data, and updates the UI.
            *
            * @refactored-by shepherd-06
            *
-           * @param {Event} e - The submit event object.
            */
-          async function handleFormSubmit(e) {
-            // e.preventDefault();
+          async function handleFormSubmit() {
             isLoading.value = true;
             
             const userInput = document.getElementById("userInput").value;
