@@ -299,15 +299,15 @@
           /**
            * Handles a click event on a graph history item and displays it as a graph.
            *
-           * @param {Event} event - The click event object.
+           * @param {key} key - Index of graphHistory
            *
            * @author shepherd-06
            *
            * @example
-           * handleGraphItemClick(event);
+           * handleGraphItemClick(key);
            *
            * @description
-           * This function takes a click event object and retrieves an attribute "data-item" that contains the graph history data.
+           * This function takes a click event object and retrieves data from the graph history data.
            * It then transforms this data using transformDataToGraphFormat() and displays it using createGraph().
            */
           function handleGraphItemClick(key) {
