@@ -25,35 +25,25 @@
 <body>
     <div id="app" class="flex flex-col items-start p-6 gap-6 h-screen bg-gray-100">
         <h1 class="sr-only">Instagraph</h1>
-        <div
-          id="error-message"
-          class="w-full h-3 mb-2 bg-red-500 text-white flex items-center justify-between p-4 rounded-md shadow flex"
-          v-if="errorMessage !== ''"
-          >
-          <span id="error-text">[[ errorMessage ]]</span>
+        <div v-if="errorMessage !== ''"
+             class="w-full h-3 mb-2 bg-red-500 text-white flex items-center justify-between p-4 rounded-md shadow flex">
+          <span>[[ errorMessage ]]</span>
           <span class="cursor-pointer" @click="closeErrorMessage">&times;</span>
         </div>
-        <form id="inputForm" class="flex items-center p-6 gap-6 self-stretch rounded-md bg-white"
-              @submit.prevent="handleFormSubmit"
-              >
+        <form class="flex items-center p-6 gap-6 self-stretch rounded-md bg-white" @submit.prevent="handleFormSubmit">
             <label for="userInput" class="block">
                 <span class="text-2xl font-medium">Ask a question</span><br>
                 <span class="text-base text-gray-500">Text or URL</span>
             </label>
-            <input type="text" id="userInput" class="flex-grow p-2 border rounded-md" v-model="userInput" />
+            <input type="text" class="flex-grow p-2 border rounded-md" v-model="userInput" />
             <input type="submit" value="Submit" class="py-2 px-4 bg-blue-500 text-white rounded cursor-pointer" />
         </form>
-        <div id="load" class="w-full h-3 bg-white rounded-md"
-             :class="isLoading ? 'loading block' : 'hidden'"
-             ></div>
+        <div class="w-full h-3 bg-white rounded-md" :class="isLoading ? 'loading block' : 'hidden'"></div>
 
         <div class="flex flex-col md:flex-row flex-start gap-6 flex-1 self-stretch">
-            <div class="flex flex-grow bg-white p-6 rounded-md" ref="cyRef">
-
-            </div>
+            <div class="flex flex-grow bg-white p-6 rounded-md" ref="cyRef"></div>
             <div class="md:w-1/3 w-full max-w-xs bg-white rounded-md p-6">
                 <h2 class="mb-2 text-2xl">History</h2>
-
                 <div class="space-y-2 overflow-y-auto" id="history"></div>
             </div>
         </div>
