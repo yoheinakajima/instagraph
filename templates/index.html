@@ -43,7 +43,14 @@
             <div class="space-y-2 overflow-y-auto" id="history"></div>
         </div>
     </div>
-
+    <div
+        id="error-message"
+        class="fixed w-full h-3 mb-2 bg-red-500 text-white flex items-center justify-between p-4 rounded-md shadow"
+        style="display: none"
+    >
+        <span id="error-text"></span>
+        <span id="error-close" style="cursor: pointer">&times;</span>
+    </div>
     <script>
       const calcNodeWidth = (label) => {
         // null checker added
