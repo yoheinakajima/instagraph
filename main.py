@@ -25,25 +25,29 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 response_data = ""
 
 # If Neo4j credentials are set, then Neo4j is used to store information
-neo4j_username = os.environ.get("NEO4J_USERNAME")
-neo4j_password = os.environ.get("NEO4J_PASSWORD")
-neo4j_url = os.environ.get("NEO4J_URI")
-if neo4j_url is None:
-    neo4j_url = os.environ.get("NEO4J_URL")
-    if neo4j_url is not None:
-        print("Obsolete: Please define NEO4J_URI instead")
 neo4j_driver = None
 
-if neo4j_username and neo4j_password and neo4j_url:
-    neo4j_driver = GraphDatabase.driver(
-        neo4j_url, auth=(neo4j_username, neo4j_password)
-    )
-    with neo4j_driver.session() as session:
-        try:
-            session.run("RETURN 1")
-            print("Neo4j database connected successfully!")
-        except ValueError as ve:
-            print("Neo4j database: {}".format(ve))
+
+def init_db():
+    # If Neo4j credentials are set, then Neo4j is used to store information
+    neo4j_username = os.environ.get("NEO4J_USERNAME")
+    neo4j_password = os.environ.get("NEO4J_PASSWORD")
+    neo4j_url = os.environ.get("NEO4J_URI")
+    if neo4j_url is None:
+        neo4j_url = os.environ.get("NEO4J_URL")
+        if neo4j_url is not None:
+            print("Obsolete: Please define NEO4J_URI instead")
+
+    if neo4j_username and neo4j_password and neo4j_url:
+        driver = GraphDatabase.driver(neo4j_url, auth=(neo4j_username, neo4j_password))
+        with driver.session() as session:
+            try:
+                session.run("RETURN 1")
+                print("Neo4j database connected successfully!")
+                return driver
+            except ValueError as ve:
+                print("Neo4j database: {}".format(ve))
+
 
 # Function to scrape text from a website
 
@@ -356,6 +360,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     port = args.port_num
+
+    neo4j_driver = init_db()
 
     if args.debug:
         app.run(debug=True, host="0.0.0.0", port=port)
