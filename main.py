@@ -26,7 +26,11 @@ response_data = ""
 # If Neo4j credentials are set, then Neo4j is used to store information
 neo4j_username = os.environ.get("NEO4J_USERNAME")
 neo4j_password = os.environ.get("NEO4J_PASSWORD")
-neo4j_url = os.environ.get("NEO4J_URL")
+neo4j_url = os.environ.get("NEO4J_URI")
+if neo4j_url is None:
+    neo4j_url = os.environ.get("NEO4J_URL")
+    if neo4j_url is not None:
+        print("Obsolete: Please define NEO4J_URI instead")
 neo4j_driver = None
 
 if neo4j_username and neo4j_password and neo4j_url:
@@ -143,6 +147,14 @@ def get_response_data():
 
         # Its now a dict, no need to worry about json loading so many times
         response_data = completion.model_dump()
+
+        # copy "from_" prop to "from" prop on all edges
+        edges = response_data['edges']
+        def _restore(e):
+            e["from"] = e["from_"]
+            return e
+        response_data['edges'] = [_restore(e) for e in edges]
+
     except openai.error.RateLimitError as e:
         # request limit exceeded or something.
         print(e)
@@ -242,7 +254,7 @@ def get_graph_data():
             edges = [
                 {
                     "data": {
-                        "source": edge["from_"],
+                        "source": edge["from"],
                         "target": edge["to"],
                         "label": edge["relationship"],
                         "color": edge.get("color", "defaultColor"),
