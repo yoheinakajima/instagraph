@@ -14,6 +14,7 @@ class Node(BaseModel):
     properties: Dict[str, Any] = Field({}, description="Additional attributes for the node")
 
 class Edge(BaseModel):
+    # WARING: Notice that this is "from_", not "from"
     from_: str = Field(..., alias='from', description="Origin node ID")
     to: str = Field(..., description="Destination node ID")
     relationship: str = Field(..., description="Type of relationship between the nodes")
