@@ -114,13 +114,14 @@ def too_many_requests(e):
 
 def correct_json(json_str):
     """
-    Corrects the JSON response from OpenAI to be valid JSON
+    Corrects the JSON response from OpenAI to be valid JSON by removing trailing commas
     """
-    sanitized_str = re.sub(r',\s*}', '}', json_str)
-    sanitized_str = re.sub(r',\s*]', ']', sanitized_str)
+    while ',\s*}' in json_str or ',\s*]' in json_str:
+        json_str = re.sub(r',\s*}', '}', json_str)
+        json_str = re.sub(r',\s*]', ']', json_str)
 
     try:
-        return json.loads(sanitized_str)
+        return json.loads(json_str)
     except json.JSONDecodeError as e:
         print("SantizationError: {}".format(e))
         return None
