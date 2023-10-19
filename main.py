@@ -123,7 +123,7 @@ def correct_json(json_str):
     try:
         return json.loads(json_str)
     except json.JSONDecodeError as e:
-        print("SantizationError: {}".format(e))
+        print("SanitizationError:", e, "for JSON:", json_str)
         return None
 
 
