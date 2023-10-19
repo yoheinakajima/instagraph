@@ -68,7 +68,7 @@ Add Neo4J username, password and URL in the `*.env` file as well.
 ```text
 NEO4J_USERNAME=
 NEO4J_PASSWORD=
-NEO4J_URL=
+NEO4J_URI=
 ```
 
 #### 5. Run the Flask app
