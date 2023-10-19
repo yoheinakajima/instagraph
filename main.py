@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 import re
@@ -364,4 +365,14 @@ def index():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+    parser = argparse.ArgumentParser(description="InstaGraph")
+    parser.add_argument("--debug", action="store_true")
+    parser.add_argument("--port", type=int, dest="port_num", default=8080)
+
+    args = parser.parse_args()
+    port = args.port_num
+
+    if args.debug:
+        app.run(debug=True, host="0.0.0.0", port=port)
+    else:
+        app.run(host="0.0.0.0", port=port)
