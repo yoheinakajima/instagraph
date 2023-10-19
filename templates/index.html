@@ -82,12 +82,16 @@
           };
 
           const renderGraph = async () => {
-            const graphData = await postData("/get_graph_data");
-            if (Object.keys(graphData).length === 0) {
-              console.error("graphData is empty");
-              return;
-            } else {
-              await createGraph(graphData);
+            try {
+              const graphData = await postData("/get_graph_data");
+              if (Object.keys(graphData).length === 0) {
+                console.error("graphData is empty");
+                return;
+              } else {
+                await createGraph(graphData);
+              }
+            } catch (error) {
+              console.error("Error fetching graph data:", error);
             }
           };
           
