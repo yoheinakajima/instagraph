@@ -120,6 +120,7 @@ def get_response_data():
     if user_input.startswith("http"):
         user_input = scrape_text_from_url(user_input)
 
+    prompt = f"Help me understand following by describing as a detailed knowledge graph: {user_input}"
     print("starting openai call")
     try:
         completion: KnowledgeGraph = openai.ChatCompletion.create(
@@ -127,7 +128,7 @@ def get_response_data():
             messages=[
                 {
                     "role": "user",
-                    "content": f"Help me understand following by describing as a detailed knowledge graph: {user_input}",
+                    "content": prompt,
                 }
             ],
             response_model=KnowledgeGraph,
