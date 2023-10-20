@@ -225,17 +225,8 @@
            * const textColor = getTextColor("#FFFFFF"); // returns "#000000" (black)
            */
           function getTextColor(bgColor = "#000000") {
-            let brightness;
-            if (bgColor === null || bgColor === undefined) {
-              // Default brightness value when bgColor is null or undefined
-              brightness = 0;
-            } else {
-              bgColor = bgColor.replace("#", "");
-              const [r, g, b] = [0, 2, 4].map((start) =>
-                parseInt(bgColor.substr(start, 2), 16)
-              );
-              brightness = r * 0.299 + g * 0.587 + b * 0.114;
-            }
+            const [r, g, b] = [0, 2, 4].map((start) => parseInt(bgColor.replace("#", "").substr(start, 2), 16));
+            const brightness = r * 0.299 + g * 0.587 + b * 0.114;
             return brightness < 40 ? "#ffffff" : "#000000";
           }
           
