@@ -121,12 +121,14 @@ def get_response_data():
         user_input = scrape_text_from_url(user_input)
 
     if user_input.startswith("+"):
-        prompt = "\n".join(["Please update the konwledge graph based on the instruction.",
-                            "[Instruction]",
-                            user_input[1:],
-                            "[Current Graph]",
-                            json.dumps(response_data)
-                            ])
+        prompt = "\n".join(
+            [
+                "Please update the konwledge graph based on the instruction.",
+                json.dumps(
+                    dict(instruction=user_input[1:], knowledge_graph=response_data)
+                ),
+            ]
+        )
     else:
         prompt = f"Help me understand following by describing as a detailed knowledge graph: {user_input}"
     print("starting openai call", prompt)
