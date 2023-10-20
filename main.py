@@ -123,7 +123,7 @@ def get_response_data():
     if user_input.startswith("+"):
         prompt = "\n".join(
             [
-                "Please update the konwledge graph based on the instruction.",
+                "Please update the knowledge graph based on the instruction.",
                 json.dumps(
                     dict(instruction=user_input[1:], knowledge_graph=response_data)
                 ),
