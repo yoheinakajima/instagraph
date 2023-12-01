@@ -63,7 +63,7 @@ OPENAI_API_KEY=your-api-key-here
 
 ##### Optional
 
-Add Neo4J username, password and URL in the `*.env` file as well.
+Add Neo4J username, password and URL in the `*.env` file as well by creating an instance of neo4j.
 
 ```text
 NEO4J_USERNAME=
