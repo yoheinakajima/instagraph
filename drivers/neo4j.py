@@ -30,7 +30,7 @@ class Neo4j(Driver):
                     print("Neo4j database: {}".format(ve))
                     raise
         else:
-            raise Exception("Configuration for Neo4j is missing")
+            raise ValueError("Configuration for Neo4j is missing")
 
     def get_graph_data(self) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
         nodes, _, _ = self.driver.execute_query(
