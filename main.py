@@ -146,7 +146,9 @@ def get_response_data():
 
     try:
         if driver:
-            driver.get_response_data(response_data)
+            results = driver.get_response_data(response_data)
+            print("Results from Graph:", results)
+
 
     except Exception as e:
         print("An error occurred during the Graph operation:", e)
@@ -229,16 +231,16 @@ def get_graph_history():
         per_page = 10
         skip = (page - 1) * per_page
 
-        if driver:
-            return driver.get_graph_history(skip, per_page)            
-        else:
-            return jsonify(
-                {
-                    "graph_history": [],
-                    "error": "Graph driver not initialized",
-                    "graph": False,
-                }
-            )
+        result = (
+            driver.get_graph_history(skip, per_page)
+            if driver
+            else {
+                "graph_history": [],
+                "error": "Graph driver not initialized",
+                "graph": False,
+            }
+        )
+        return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e), "graph": driver is not None}), 500
 

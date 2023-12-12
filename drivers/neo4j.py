@@ -1,7 +1,7 @@
 import os
+from typing import Any
 
 from driver import Driver
-from flask import jsonify
 from neo4j import GraphDatabase
 
 
@@ -32,7 +32,7 @@ class Neo4j(Driver):
         else:
             raise Exception("Configuration for Neo4j is missing")
 
-    def get_graph_data(self):
+    def get_graph_data(self) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
         nodes, _, _ = self.driver.execute_query(
             """
         MATCH (n)
@@ -57,7 +57,7 @@ class Neo4j(Driver):
         return (nodes, edges)
 
 
-    def get_graph_history(self, skip, per_page):
+    def get_graph_history(self, skip, per_page) -> dict[str, Any]:
         # Getting the total number of graphs
         total_graphs, _, _ = self.driver.execute_query(
             """
@@ -84,13 +84,14 @@ class Neo4j(Driver):
         graph_history = [Neo4j._process_graph_data(record) for record in result]
         remaining = max(0, total_count - skip - per_page)
 
-        return jsonify(
-            {"graph_history": graph_history, "remaining": remaining, "neo4j": True}
-        )
+        return {"graph_history": graph_history, "remaining": remaining, "graph": True}
     
-    def get_response_data(self, response_data):
+    def get_response_data(self, response_data)-> tuple[
+        list[dict[str, Any]], 
+        list[dict[str, Any]]
+    ]:
         # Import nodes
-        results = self.driver.execute_query(
+        nodes = self.driver.execute_query(
             """
             UNWIND $nodes AS node
             MERGE (n:Node {id: node.id})
@@ -98,9 +99,8 @@ class Neo4j(Driver):
             """,
             {"nodes": response_data["nodes"]},
         )
-        print("Results from Neo4j:", results)
         # Import relationships
-        results = self.driver.execute_query(
+        relationships = self.driver.execute_query(
             """
             UNWIND $rels AS rel
             MATCH (s:Node {id: rel.from})
@@ -112,8 +112,7 @@ class Neo4j(Driver):
             """,
             {"rels": response_data["edges"]},
         )
-        # print(f"Created {summary.counters.updates().relationshipsCreated} relationships.")
-        print("Results from Neo4j:", results)
+        return (nodes, relationships)
 
     
     @staticmethod

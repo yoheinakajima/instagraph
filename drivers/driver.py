@@ -1,17 +1,21 @@
 from abc import ABC, abstractmethod
+from typing import Any
 
 
 class Driver(ABC):
 
     @abstractmethod
-    def get_graph_data(self):
+    def get_graph_data(self) -> tuple[
+        list[dict[str, Any]], 
+        list[dict[str, Any]]
+    ]:
         """
         Abstract method to get graph data.
         """
         pass
 
     @abstractmethod
-    def get_graph_history(self, skip: int, per_page: int) -> Any:
+    def get_graph_history(self, skip: int, per_page: int) -> dict[str, Any]:
         """
         Abstract method to get graph history.
         
@@ -22,7 +26,10 @@ class Driver(ABC):
         pass
 
     @abstractmethod
-    def get_response_data(self, response_data: Any) -> Any:
+    def get_response_data(self, response_data: Any) -> tuple[
+        list[dict[str, Any]], 
+        list[dict[str, Any]]
+    ]:
         """
         Abstract method to process response data.
         
