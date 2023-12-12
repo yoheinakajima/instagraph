@@ -257,7 +257,7 @@ if __name__ == "__main__":
     port = args.port_num
     graph = args.graph_db
 
-    match graph:
+    match graph.lower():
         case "neo4j":
             driver = Neo4j()
         case _:
