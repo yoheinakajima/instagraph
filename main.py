@@ -251,7 +251,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="InstaGraph")
     parser.add_argument("--debug", action="store_true")
     parser.add_argument("--port", type=int, dest="port_num", default=8080)
-    parser.add_argument("--graph", type=int, dest="graph_db", default=8080)
+    parser.add_argument("--graph", type=str, dest="graph_db", default="neo4j")
 
     args = parser.parse_args()
     port = args.port_num
