@@ -116,6 +116,7 @@ class Neo4j(Driver):
         print("Results from Neo4j:", results)
 
     
+    @staticmethod
     def _process_graph_data(record):
         """
         This function processes a record from the Neo4j query result
