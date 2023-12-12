@@ -9,18 +9,18 @@ class Neo4j(Driver):
 
     def __init__(self):
         # If Neo4j credentials are set, then Neo4j is used to store information
-        self.neo4j_username = os.environ.get("NEO4J_USERNAME")
-        self.neo4j_password = os.environ.get("NEO4J_PASSWORD")
-        self.neo4j_url = os.environ.get("NEO4J_URI")
-        if self.neo4j_url is None:
-            self.neo4j_url = os.environ.get("NEO4J_URL")
-            if self.neo4j_url is not None:
+        username = os.environ.get("NEO4J_USERNAME")
+        password = os.environ.get("NEO4J_PASSWORD")
+        url = os.environ.get("NEO4J_URI")
+        if url is None:
+            url = os.environ.get("NEO4J_URL")
+            if url is not None:
                 print("Obsolete: Please define NEO4J_URI instead")
 
-        if self.neo4j_username and self.neo4j_password and self.neo4j_url:
-            self.driver = GraphDatabase.driver(self.neo4j_url, 
-                                          auth=(self.neo4j_username, 
-                                                self.neo4j_password))
+        if username and password and url:
+            self.driver = GraphDatabase.driver(url, 
+                                          auth=(username, 
+                                                password))
             # Check if connection is successful
             with self.driver.session() as session:
                 try:
