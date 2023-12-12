@@ -235,12 +235,12 @@ def get_graph_history():
             return jsonify(
                 {
                     "graph_history": [],
-                    "error": "Neo4j driver not initialized",
-                    "neo4j": False,
+                    "error": "Graph driver not initialized",
+                    "graph": False,
                 }
             )
     except Exception as e:
-        return jsonify({"error": str(e), "neo4j": driver is not None}), 500
+        return jsonify({"error": str(e), "graph": driver is not None}), 500
 
 @app.route("/")
 def index():
