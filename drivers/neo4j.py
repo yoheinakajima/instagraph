@@ -1,8 +1,9 @@
 import os
 from typing import Any
 
-from driver import Driver
 from neo4j import GraphDatabase
+
+from .driver import Driver
 
 
 class Neo4j(Driver):
