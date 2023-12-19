@@ -10,8 +10,8 @@ from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template, request
 from graphviz import Digraph
-from neo4j import GraphDatabase
 
+from drivers.neo4j import Neo4j
 from models import KnowledgeGraph
 
 instructor.patch()
@@ -24,29 +24,8 @@ app = Flask(__name__)
 openai.api_key = os.getenv("OPENAI_API_KEY")
 response_data = ""
 
-# If Neo4j credentials are set, then Neo4j is used to store information
-neo4j_driver = None
-
-
-def init_db():
-    # If Neo4j credentials are set, then Neo4j is used to store information
-    neo4j_username = os.environ.get("NEO4J_USERNAME")
-    neo4j_password = os.environ.get("NEO4J_PASSWORD")
-    neo4j_url = os.environ.get("NEO4J_URI")
-    if neo4j_url is None:
-        neo4j_url = os.environ.get("NEO4J_URL")
-        if neo4j_url is not None:
-            print("Obsolete: Please define NEO4J_URI instead")
-
-    if neo4j_username and neo4j_password and neo4j_url:
-        driver = GraphDatabase.driver(neo4j_url, auth=(neo4j_username, neo4j_password))
-        with driver.session() as session:
-            try:
-                session.run("RETURN 1")
-                print("Neo4j database connected successfully!")
-                return driver
-            except ValueError as ve:
-                print("Neo4j database: {}".format(ve))
+# If a Graph database set, then driver is used to store information
+driver = None
 
 
 # Function to scrape text from a website
@@ -166,38 +145,16 @@ def get_response_data():
         return jsonify({"error": "unknown error"}), 400
 
     try:
-        if neo4j_driver:
-            # Import nodes
-            results = neo4j_driver.execute_query(
-                """
-                UNWIND $nodes AS node
-                MERGE (n:Node {id: node.id})
-                SET n.type = node.type, n.label = node.label, n.color = node.color
-                """,
-                {"nodes": response_data["nodes"]},
-            )
-            print("Results from Neo4j:", results)
-            # Import relationships
-            results = neo4j_driver.execute_query(
-                """
-                UNWIND $rels AS rel
-                MATCH (s:Node {id: rel.from})
-                MATCH (t:Node {id: rel.to})
-                MERGE (s)-[r:RELATIONSHIP {type:rel.relationship}]->(t)
-                SET r.direction = rel.direction,
-                    r.color = rel.color,
-                    r.timestamp = timestamp();
-                """,
-                {"rels": response_data["edges"]},
-            )
-            # print(f"Created {summary.counters.updates().relationshipsCreated} relationships.")
-            print("Results from Neo4j:", results)
+        if driver:
+            results = driver.get_response_data(response_data)
+            print("Results from Graph:", results)
+
 
     except Exception as e:
-        print("An error occurred during the Neo4j operation:", e)
+        print("An error occurred during the Graph operation:", e)
         return (
             jsonify(
-                {"error": "An error occurred during the Neo4j operation: {}".format(e)}
+                {"error": "An error occurred during the Graph operation: {}".format(e)}
             ),
             500,
         )
@@ -234,27 +191,8 @@ def visualize_knowledge_graph_with_graphviz():
 @app.route("/get_graph_data", methods=["POST"])
 def get_graph_data():
     try:
-        if neo4j_driver:
-            nodes, _, _ = neo4j_driver.execute_query(
-                """
-            MATCH (n)
-            WITH collect(
-                {data: {id: n.id, label: n.label, color: n.color}}) AS node
-            RETURN node
-            """
-            )
-            nodes = [el["node"] for el in nodes][0]
-
-            edges, _, _ = neo4j_driver.execute_query(
-                """
-            MATCH (s)-[r]->(t)
-            WITH collect(
-                {data: {source: s.id, target: t.id, label:r.type, color: r.color}}
-            ) AS rel
-            RETURN rel
-            """
-            )
-            edges = [el["rel"] for el in edges][0]
+        if driver:
+            (nodes, edges) = driver.get_graph_data()
         else:
             global response_data
             # print(response_data)
@@ -293,71 +231,18 @@ def get_graph_history():
         per_page = 10
         skip = (page - 1) * per_page
 
-        if neo4j_driver:
-            # Getting the total number of graphs
-            total_graphs, _, _ = neo4j_driver.execute_query(
-                """
-            MATCH (n)-[r]->(m)
-            RETURN count(n) as total_count
-            """
-            )
-            total_count = total_graphs[0]["total_count"]
-
-            # Fetching 10 most recent graphs
-            result, _, _ = neo4j_driver.execute_query(
-                """
-            MATCH (n)-[r]->(m)
-            RETURN n, r, m
-            ORDER BY r.timestamp DESC
-            SKIP {skip}
-            LIMIT {per_page}
-            """.format(
-                    skip=skip, per_page=per_page
-                )
-            )
-
-            # Process the 'result' to format it as a list of graphs
-            graph_history = [process_graph_data(record) for record in result]
-            remaining = max(0, total_count - skip - per_page)
-
-            return jsonify(
-                {"graph_history": graph_history, "remaining": remaining, "neo4j": True}
-            )
-        else:
-            return jsonify(
-                {
-                    "graph_history": [],
-                    "error": "Neo4j driver not initialized",
-                    "neo4j": False,
-                }
-            )
+        result = (
+            driver.get_graph_history(skip, per_page)
+            if driver
+            else {
+                "graph_history": [],
+                "error": "Graph driver not initialized",
+                "graph": False,
+            }
+        )
+        return jsonify(result)
     except Exception as e:
-        return jsonify({"error": str(e), "neo4j": neo4j_driver is not None}), 500
-
-
-def process_graph_data(record):
-    """
-    This function processes a record from the Neo4j query result
-    and formats it as a dictionary with the node details and the relationship.
-
-    :param record: A record from the Neo4j query result
-    :return: A dictionary representing the graph data
-    """
-    try:
-        node_from = record["n"].items()
-        node_to = record["m"].items()
-        relationship = record["r"].items()
-
-        graph_data = {
-            "from_node": {key: value for key, value in node_from},
-            "to_node": {key: value for key, value in node_to},
-            "relationship": {key: value for key, value in relationship},
-        }
-
-        return graph_data
-    except Exception as e:
-        return {"error": str(e)}
-
+        return jsonify({"error": str(e), "graph": driver is not None}), 500
 
 @app.route("/")
 def index():
@@ -368,11 +253,21 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="InstaGraph")
     parser.add_argument("--debug", action="store_true")
     parser.add_argument("--port", type=int, dest="port_num", default=8080)
+    parser.add_argument("--graph", type=str, dest="graph_db", default="neo4j")
 
     args = parser.parse_args()
     port = args.port_num
+    graph = args.graph_db
 
-    neo4j_driver = init_db()
+    match graph.lower():
+        case "neo4j":
+            driver = Neo4j()
+        case _:
+            # Default try to connect to Neo4j for backward compatibility
+            try:
+                driver = Neo4j()
+            except Exception:
+                driver = None
 
     if args.debug:
         app.run(debug=True, host="0.0.0.0", port=port)
