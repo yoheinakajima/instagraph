@@ -262,8 +262,8 @@
               }
 
               const graph_response = await response.json();
-              if (!graph_response.neo4j) {
-                historyError.value = "no neo4j"
+              if (!graph_response.graph) {
+                historyError.value = "no graph"
                 return;
               }
               graphHistory.value = graph_response.graph_history;
