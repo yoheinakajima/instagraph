@@ -24,20 +24,14 @@ class FalkorDB(Driver):
         nodes = self.driver.query(
             """
         MATCH (n)
-        WITH collect(
-            {data: {id: n.id, label: n.label, color: n.color}}) AS node
-        RETURN node
+        RETURN {id: n.id, label: n.label, color: n.color}
         """
         )
-        nodes = [el["node"] for el in nodes][0]
 
         edges = self.driver.query(
             """
         MATCH (s)-[r]->(t)
-        WITH collect(
-            {data: {source: s.id, target: t.id, label:r.type, color: r.color}}
-        ) AS rel
-        RETURN rel
+        return {source: s.id, target: t.id, label:r.type, color: r.color}
         """
         )
         edges = [el["rel"] for el in edges][0]
