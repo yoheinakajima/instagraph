@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template, request
 from graphviz import Digraph
 
+from drivers.falkordb import FalkorDB
 from drivers.neo4j import Neo4j
 from models import KnowledgeGraph
 
@@ -262,6 +263,8 @@ if __name__ == "__main__":
     match graph.lower():
         case "neo4j":
             driver = Neo4j()
+        case "falkordb":
+            driver = FalkorDB()
         case _:
             # Default try to connect to Neo4j for backward compatibility
             try:
