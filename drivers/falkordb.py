@@ -7,9 +7,7 @@ from .driver import Driver
 
 
 class FalkorDB(Driver):
-
     def __init__(self):
-
         url = os.environ.get("FALKORDB_URL", "redis://localhost:6379")
 
         self.driver = FalkorDBDriver.from_url(url).select_graph("falkordb")
@@ -46,9 +44,7 @@ class FalkorDB(Driver):
 
         return (nodes.result_set, edges.result_set)
 
-
     def get_graph_history(self, skip, per_page) -> dict[str, Any]:
-
         # Getting the total number of graphs
         result = self.driver.query(
             """
@@ -61,7 +57,7 @@ class FalkorDB(Driver):
 
         # if total_count == 0:
         #     return {"graph_history": [], "remaining": 0, "graph": False}
-        
+
         # Fetching 10 most recent graphs
         result = self.driver.query(
             """
@@ -76,15 +72,16 @@ class FalkorDB(Driver):
         )
 
         # Process the 'result' to format it as a list of graphs
-        graph_history = [FalkorDB._process_graph_data(record) for record in result.result_set]
+        graph_history = [
+            FalkorDB._process_graph_data(record) for record in result.result_set
+        ]
         remaining = max(0, total_count - skip - per_page)
 
         return {"graph_history": graph_history, "remaining": remaining, "graph": True}
-    
-    def get_response_data(self, response_data)-> tuple[
-        list[dict[str, Any]], 
-        list[dict[str, Any]]
-    ]:
+
+    def get_response_data(
+        self, response_data
+    ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
         # Import nodes
         nodes = self.driver.query(
             """
@@ -109,7 +106,6 @@ class FalkorDB(Driver):
         )
         return (nodes.result_set, relationships.result_set)
 
-    
     @staticmethod
     def _process_graph_data(record) -> dict[str, Any]:
         """

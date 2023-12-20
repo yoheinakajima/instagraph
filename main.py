@@ -150,7 +150,6 @@ def get_response_data():
             results = driver.get_response_data(response_data)
             print("Results from Graph:", results)
 
-
     except Exception as e:
         print("An error occurred during the Graph operation:", e)
         return (
@@ -244,6 +243,7 @@ def get_graph_history():
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e), "graph": driver is not None}), 500
+
 
 @app.route("/")
 def index():
