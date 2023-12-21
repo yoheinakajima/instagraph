@@ -245,6 +245,7 @@ def get_graph_history():
         )
         return jsonify(result)
     except Exception as e:
+        logging.error("%s", e)
         return jsonify({"error": str(e), "graph": driver is not None}), 500
 
 
