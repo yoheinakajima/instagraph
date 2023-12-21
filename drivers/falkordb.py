@@ -14,7 +14,6 @@ class FalkorDB(Driver):
 
         # Check if connection is successful
         try:
-            self.driver.query("RETURN 1")
             print("FalkorDB database connected successfully!")
         except ValueError as ve:
             print("FalkorDB database: {}".format(ve))
@@ -24,19 +23,20 @@ class FalkorDB(Driver):
         nodes = self.driver.query(
             """
         MATCH (n)
-        RETURN {id: n.id, label: n.label, color: n.color}
+        RETURN {data: {id: n.id, label: n.label, color: n.color}}
         """
         )
+        nodes = [el[0] for el in nodes.result_set]
 
         edges = self.driver.query(
             """
         MATCH (s)-[r]->(t)
-        return {source: s.id, target: t.id, label:r.type, color: r.color}
+        return {data: {source: s.id, target: t.id, label:r.type, color: r.color}}
         """
         )
-        edges = [el["rel"] for el in edges][0]
+        edges = [el[0] for el in edges.result_set]
 
-        return (nodes.result_set, edges.result_set)
+        return (nodes, edges)
 
     def get_graph_history(self, skip, per_page) -> dict[str, Any]:
         # Getting the total number of graphs
@@ -49,8 +49,9 @@ class FalkorDB(Driver):
 
         total_count = result.result_set[0][0]
 
-        # if total_count == 0:
-        #     return {"graph_history": [], "remaining": 0, "graph": False}
+        # If there is no history, return an empty list
+        if total_count == 0:
+            return {"graph_history": [], "remaining": 0, "graph": True}
 
         # Fetching 10 most recent graphs
         result = self.driver.query(
@@ -111,13 +112,13 @@ class FalkorDB(Driver):
         """
         try:
             node_from = record[0].properties
-            node_to = record[1].properties
-            relationship = record[2].properties
+            relationship = record[1].properties
+            node_to = record[2].properties
 
             graph_data = {
                 "from_node": node_from,
-                "to_node": node_to,
                 "relationship": relationship,
+                "to_node": node_to,
             }
 
             return graph_data
