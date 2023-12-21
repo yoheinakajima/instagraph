@@ -87,7 +87,7 @@ def correct_json(json_str):
     try:
         return json.loads(json_str)
     except json.JSONDecodeError as e:
-        logging.error("SanitizationError:", e, "for JSON:", json_str)
+        logging.error("SanitizationError: %s for JSON: %s", str(e), json_str, exc_info=True)
         return None
 
 
