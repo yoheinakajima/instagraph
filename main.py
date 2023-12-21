@@ -152,7 +152,7 @@ def get_response_data():
             logging.info("Results from Graph:", results)
 
     except Exception as e:
-        logging.error("An error occurred during the Graph operation:", e)
+        logging.error("An error occurred during the Graph operation: %s", e)
         return (
             jsonify(
                 {"error": "An error occurred during the Graph operation: {}".format(e)}
