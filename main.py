@@ -143,7 +143,7 @@ def get_response_data():
         return jsonify({"error": "rate limitation"}), 429
     except Exception as e:
         # general exception handling
-        logging.error(e)
+        logging.error("%s", e)
         return jsonify({"error": "unknown error"}), 400
 
     try:
