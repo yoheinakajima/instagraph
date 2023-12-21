@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import Any
 
@@ -14,9 +15,9 @@ class FalkorDB(Driver):
 
         # Check if connection is successful
         try:
-            print("FalkorDB database connected successfully!")
+            logging.info("FalkorDB database connected successfully!")
         except ValueError as ve:
-            print("FalkorDB database: {}".format(ve))
+            logging.error("FalkorDB database: {}".format(ve))
             raise
 
     def get_graph_data(self) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
