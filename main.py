@@ -112,7 +112,7 @@ def get_response_data():
     else:
         prompt = f"Help me understand following by describing as a detailed knowledge graph: {user_input}"
 
-    logging.info("starting openai call", prompt)
+    logging.info("starting openai call: %s", prompt)
     try:
         completion: KnowledgeGraph = openai.ChatCompletion.create(
             model="gpt-3.5-turbo-16k",
