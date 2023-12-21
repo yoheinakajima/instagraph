@@ -15,7 +15,7 @@ class Neo4j(Driver):
         if url is None:
             url = os.environ.get("NEO4J_URL")
             if url is not None:
-                print("Obsolete: Please define NEO4J_URI instead")
+                logging.warning("Obsolete: Please define NEO4J_URI instead")
 
         if username and password and url:
             self.driver = GraphDatabase.driver(url, auth=(username, password))
