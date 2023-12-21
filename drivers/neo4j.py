@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import Any
 
@@ -23,9 +24,9 @@ class Neo4j(Driver):
             with self.driver.session() as session:
                 try:
                     session.run("RETURN 1")
-                    print("Neo4j database connected successfully!")
+                    logging.info("Neo4j database connected successfully!")
                 except ValueError as ve:
-                    print("Neo4j database: {}".format(ve))
+                    logging.error("Neo4j database: {}".format(ve))
                     raise
         else:
             raise ValueError("Configuration for Neo4j is missing")
