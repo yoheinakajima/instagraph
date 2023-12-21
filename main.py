@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template, request
 from graphviz import Digraph
 
+from drivers.driver import Driver
 from drivers.falkordb import FalkorDB
 from drivers.neo4j import Neo4j
 from models import KnowledgeGraph
@@ -26,7 +27,7 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 response_data = ""
 
 # If a Graph database set, then driver is used to store information
-driver = None
+driver: Driver | None = None
 
 
 # Function to scrape text from a website
