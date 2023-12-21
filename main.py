@@ -139,7 +139,7 @@ def get_response_data():
 
     except openai.error.RateLimitError as e:
         # request limit exceeded or something.
-        logging.warning(e)
+        logging.warning("%s", e)
         return jsonify({"error": "rate limitation"}), 429
     except Exception as e:
         # general exception handling
