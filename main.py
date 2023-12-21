@@ -1,5 +1,6 @@
 import argparse
 import json
+import logging
 import os
 import re
 
@@ -38,7 +39,7 @@ def scrape_text_from_url(url):
     soup = BeautifulSoup(response.text, "html.parser")
     paragraphs = soup.find_all("p")
     text = " ".join([p.get_text() for p in paragraphs])
-    print("web scrape done")
+    logging.info("web scrape done")
     return text
 
 
@@ -86,7 +87,7 @@ def correct_json(json_str):
     try:
         return json.loads(json_str)
     except json.JSONDecodeError as e:
-        print("SanitizationError:", e, "for JSON:", json_str)
+        logging.error("SanitizationError:", e, "for JSON:", json_str)
         return None
 
 
@@ -110,7 +111,8 @@ def get_response_data():
         )
     else:
         prompt = f"Help me understand following by describing as a detailed knowledge graph: {user_input}"
-    print("starting openai call", prompt)
+
+    logging.info("starting openai call", prompt)
     try:
         completion: KnowledgeGraph = openai.ChatCompletion.create(
             model="gpt-3.5-turbo-16k",
@@ -137,21 +139,20 @@ def get_response_data():
 
     except openai.error.RateLimitError as e:
         # request limit exceeded or something.
-        print(e)
+        logging.warning(e)
         return jsonify({"error": "rate limitation"}), 429
     except Exception as e:
         # general exception handling
-        print(e)
+        logging.error(e)
         return jsonify({"error": "unknown error"}), 400
 
     try:
         if driver:
             results = driver.get_response_data(response_data)
-            print("Results from Graph:", results)
-
+            logging.info("Results from Graph:", results)
 
     except Exception as e:
-        print("An error occurred during the Graph operation:", e)
+        logging.error("An error occurred during the Graph operation:", e)
         return (
             jsonify(
                 {"error": "An error occurred during the Graph operation: {}".format(e)}
@@ -243,6 +244,7 @@ def get_graph_history():
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e), "graph": driver is not None}), 500
+
 
 @app.route("/")
 def index():
