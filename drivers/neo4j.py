@@ -7,7 +7,6 @@ from .driver import Driver
 
 
 class Neo4j(Driver):
-
     def __init__(self):
         # If Neo4j credentials are set, then Neo4j is used to store information
         username = os.environ.get("NEO4J_USERNAME")
@@ -19,9 +18,7 @@ class Neo4j(Driver):
                 print("Obsolete: Please define NEO4J_URI instead")
 
         if username and password and url:
-            self.driver = GraphDatabase.driver(url, 
-                                          auth=(username, 
-                                                password))
+            self.driver = GraphDatabase.driver(url, auth=(username, password))
             # Check if connection is successful
             with self.driver.session() as session:
                 try:
@@ -57,7 +54,6 @@ class Neo4j(Driver):
 
         return (nodes, edges)
 
-
     def get_graph_history(self, skip, per_page) -> dict[str, Any]:
         # Getting the total number of graphs
         total_graphs, _, _ = self.driver.execute_query(
@@ -86,11 +82,10 @@ class Neo4j(Driver):
         remaining = max(0, total_count - skip - per_page)
 
         return {"graph_history": graph_history, "remaining": remaining, "graph": True}
-    
-    def get_response_data(self, response_data)-> tuple[
-        list[dict[str, Any]], 
-        list[dict[str, Any]]
-    ]:
+
+    def get_response_data(
+        self, response_data
+    ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
         # Import nodes
         nodes = self.driver.execute_query(
             """
@@ -115,7 +110,6 @@ class Neo4j(Driver):
         )
         return (nodes, relationships)
 
-    
     @staticmethod
     def _process_graph_data(record):
         """
