@@ -61,9 +61,13 @@ Add your OpenAI API key to .env file:
 OPENAI_API_KEY=your-api-key-here
 ```
 
-##### Optional
+##### Optional - Set a Graph Database
 
-Add Neo4J username, password and URL in the `*.env` file as well by creating an instance of neo4j.
+Use: `[--graph neo4j|falkordb]` to select the Graph Database driver
+
+- Neo4J
+
+Add Neo4J username, password and URL in the `*.env` file as well by creating an instance of [neo4j](https://neo4j.com/cloud/platform/aura-graph-database).
 
 ```text
 NEO4J_USERNAME=
@@ -71,29 +75,42 @@ NEO4J_PASSWORD=
 NEO4J_URI=
 ```
 
+- FalkorDB
+
+Add FalkorDB URL in the `*.env` file as well by creating an instance of [FlakorDB](https://www.falkordb.com/try-free).
+
+```text
+FALKORDB_URL=
+```
+
 #### 5. Run the Flask app
 
 ```bash
-python main.py
+python main.py [--graph neo4j|falkordb] [--port port] [--debug]
 ```
 
-   Navigate to `http://localhost:8080` to see your app running.
+Navigate to `http://localhost:8080` to see your app running.
 
-## Run as Container 
+## Run as Container
+
 #### 1. Clone the repository
+
 ```bash
 git clone https://github.com/yoheinakajima/instagraph.git
 ```
+
 #### 2. Navigate to the project docker directory
+
 ```bash
 cd instagraph/docker
 ```
 
-#### 3.1 Run in Dev mode 
+#### 3.1 Run in Dev mode
 
 ```bash
 docker-compose -f docker-compose-dev.yml up # Add -d flag at the end to run in background/daemon mode.
 ```
+
 #### 3.2 Run in Prod - Create the docker image
 
 - Using the `gunicorn==21.2.0` to run the application in production mode

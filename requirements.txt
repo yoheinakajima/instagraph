@@ -10,3 +10,4 @@ black[jupyter]
 isort
 flake8
 mypy
+FalkorDB==1.0.1

@@ -12,6 +12,8 @@ from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template, request
 from graphviz import Digraph
 
+from drivers.driver import Driver
+from drivers.falkordb import FalkorDB
 from drivers.neo4j import Neo4j
 from models import KnowledgeGraph
 
@@ -26,7 +28,7 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 response_data = ""
 
 # If a Graph database set, then driver is used to store information
-driver = None
+driver: Driver | None = None
 
 
 # Function to scrape text from a website
@@ -264,15 +266,16 @@ if __name__ == "__main__":
     port = args.port_num
     graph = args.graph_db
 
-    match graph.lower():
-        case "neo4j":
+    if graph.lower() == "neo4j":
+        driver = Neo4j()
+    elif graph.lower() == "falkordb":
+        driver = FalkorDB()
+    else:
+        # Default try to connect to Neo4j for backward compatibility
+        try:
             driver = Neo4j()
-        case _:
-            # Default try to connect to Neo4j for backward compatibility
-            try:
-                driver = Neo4j()
-            except Exception:
-                driver = None
+        except Exception:
+            driver = None
 
     if args.debug:
         app.run(debug=True, host="0.0.0.0", port=port)
