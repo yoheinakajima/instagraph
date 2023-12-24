@@ -266,17 +266,16 @@ if __name__ == "__main__":
     port = args.port_num
     graph = args.graph_db
 
-    match graph.lower():
-        case "neo4j":
+    if graph.lower() == "neo4j":
+        driver = Neo4j()
+    elif graph.lower() == "falkordb":
+        driver = FalkorDB()
+    else:
+        # Default try to connect to Neo4j for backward compatibility
+        try:
             driver = Neo4j()
-        case "falkordb":
-            driver = FalkorDB()
-        case _:
-            # Default try to connect to Neo4j for backward compatibility
-            try:
-                driver = Neo4j()
-            except Exception:
-                driver = None
+        except Exception:
+            driver = None
 
     if args.debug:
         app.run(debug=True, host="0.0.0.0", port=port)
