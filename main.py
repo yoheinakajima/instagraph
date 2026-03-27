@@ -34,7 +34,31 @@ driver: Driver | None = None
 # Function to scrape text from a website
 
 
+
+import ipaddress
+import socket
+from urllib.parse import urlparse
+
+def is_safe_url(url):
+    """Check if URL is safe to fetch (not pointing to private/internal addresses)."""
+    try:
+        parsed = urlparse(url)
+        if parsed.scheme not in ('http', 'https'):
+            return False
+        hostname = parsed.hostname
+        if not hostname:
+            return False
+        for addr_info in socket.getaddrinfo(hostname, None):
+            ip = ipaddress.ip_address(addr_info[4][0])
+            if ip.is_private or ip.is_loopback or ip.is_link_local:
+                return False
+        return True
+    except (socket.gaierror, ValueError):
+        return False
+
 def scrape_text_from_url(url):
+    if not is_safe_url(url):
+        return "Error: URL points to a private or internal address."
     response = requests.get(url)
     if response.status_code != 200:
         return "Error: Could not retrieve content from URL."
