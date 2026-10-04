@@ -194,7 +194,6 @@ def get_response_data():
 # Function to visualize the knowledge graph using Graphviz
 @app.route("/graphviz", methods=["POST"])
 def visualize_knowledge_graph_with_graphviz():
-    global response_data
     dot = Digraph(comment="Knowledge Graph")
     response_dict = response_data
     # Add nodes to the graph
@@ -221,9 +220,8 @@ def visualize_knowledge_graph_with_graphviz():
 def get_graph_data():
     try:
         if driver:
-            (nodes, edges) = driver.get_graph_data()
+            nodes, edges = driver.get_graph_data()
         else:
-            global response_data
             # print(response_data)
             response_dict = response_data
             # Assume response_data is global or passed appropriately
@@ -301,7 +299,9 @@ if __name__ == "__main__":
         except Exception:
             driver = None
 
+    # The Werkzeug debugger allows arbitrary code execution, so it is only ever bound to loopback.
+    # debug=False is explicit: Flask 2.3+ otherwise honors FLASK_DEBUG=1 from the env.
     if args.debug:
-        app.run(debug=True, host="0.0.0.0", port=port)
+        app.run(host="127.0.0.1", port=port, debug=True)
     else:
-        app.run(host="0.0.0.0", port=port)
+        app.run(host="0.0.0.0", port=port, debug=False)

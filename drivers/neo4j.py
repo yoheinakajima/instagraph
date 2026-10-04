@@ -32,51 +32,41 @@ class Neo4j(Driver):
             raise ValueError("Configuration for Neo4j is missing")
 
     def get_graph_data(self) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-        nodes, _, _ = self.driver.execute_query(
-            """
+        nodes, _, _ = self.driver.execute_query("""
         MATCH (n)
         WITH collect(
             {data: {id: n.id, label: n.label, color: n.color}}) AS node
         RETURN node
-        """
-        )
+        """)
         nodes = [el["node"] for el in nodes][0]
 
-        edges, _, _ = self.driver.execute_query(
-            """
+        edges, _, _ = self.driver.execute_query("""
         MATCH (s)-[r]->(t)
         WITH collect(
             {data: {source: s.id, target: t.id, label:r.type, color: r.color}}
         ) AS rel
         RETURN rel
-        """
-        )
+        """)
         edges = [el["rel"] for el in edges][0]
 
         return (nodes, edges)
 
     def get_graph_history(self, skip, per_page) -> dict[str, Any]:
         # Getting the total number of graphs
-        total_graphs, _, _ = self.driver.execute_query(
-            """
+        total_graphs, _, _ = self.driver.execute_query("""
         MATCH (n)-[r]->(m)
         RETURN count(n) as total_count
-        """
-        )
+        """)
         total_count = total_graphs[0]["total_count"]
 
         # Fetching 10 most recent graphs
-        result, _, _ = self.driver.execute_query(
-            """
+        result, _, _ = self.driver.execute_query("""
         MATCH (n)-[r]->(m)
         RETURN n, r, m
         ORDER BY r.timestamp DESC
         SKIP {skip}
         LIMIT {per_page}
-        """.format(
-                skip=skip, per_page=per_page
-            )
-        )
+        """.format(skip=skip, per_page=per_page))
 
         # Process the 'result' to format it as a list of graphs
         graph_history = [Neo4j._process_graph_data(record) for record in result]
