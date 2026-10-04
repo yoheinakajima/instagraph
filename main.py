@@ -275,7 +275,9 @@ if __name__ == "__main__":
         except Exception:
             driver = None
 
+    # The Werkzeug debugger allows arbitrary code execution, so it is only ever bound to loopback.
+    # debug=False is explicit: Flask 2.3+ otherwise honors FLASK_DEBUG=1 from the env.
     if args.debug:
-        app.run(debug=True, host="0.0.0.0", port=port)
+        app.run(host="127.0.0.1", port=port, debug=True)
     else:
-        app.run(host="0.0.0.0", port=port)
+        app.run(host="0.0.0.0", port=port, debug=False)
