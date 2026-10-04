@@ -277,7 +277,5 @@ if __name__ == "__main__":
         except Exception:
             driver = None
 
-    if args.debug:
-        app.run(debug=True, host="0.0.0.0", port=port)
-    else:
-        app.run(host="0.0.0.0", port=port)
+    # Never expose the Werkzeug debugger on 0.0.0.0 (arbitrary code exec if reachable)
+    app.run(host="0.0.0.0", port=port)
