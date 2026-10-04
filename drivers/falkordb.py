@@ -21,32 +21,26 @@ class FalkorDB(Driver):
             raise
 
     def get_graph_data(self) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-        nodes = self.driver.query(
-            """
+        nodes = self.driver.query("""
         MATCH (n)
         RETURN {data: {id: n.id, label: n.label, color: n.color}}
-        """
-        )
+        """)
         nodes = [el[0] for el in nodes.result_set]
 
-        edges = self.driver.query(
-            """
+        edges = self.driver.query("""
         MATCH (s)-[r]->(t)
         return {data: {source: s.id, target: t.id, label:r.type, color: r.color}}
-        """
-        )
+        """)
         edges = [el[0] for el in edges.result_set]
 
         return (nodes, edges)
 
     def get_graph_history(self, skip, per_page) -> dict[str, Any]:
         # Getting the total number of graphs
-        result = self.driver.query(
-            """
+        result = self.driver.query("""
         MATCH (n)-[r]->(m)
         RETURN count(n) as total_count
-        """
-        )
+        """)
 
         total_count = result.result_set[0][0]
 
@@ -55,17 +49,13 @@ class FalkorDB(Driver):
             return {"graph_history": [], "remaining": 0, "graph": True}
 
         # Fetching 10 most recent graphs
-        result = self.driver.query(
-            """
+        result = self.driver.query("""
         MATCH (n)-[r]->(m)
         RETURN n, r, m
         ORDER BY r.timestamp DESC
         SKIP {skip}
         LIMIT {per_page}
-        """.format(
-                skip=skip, per_page=per_page
-            )
-        )
+        """.format(skip=skip, per_page=per_page))
 
         # Process the 'result' to format it as a list of graphs
         graph_history = [
