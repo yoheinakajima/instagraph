@@ -18,3 +18,6 @@ format:
 	# Using `--profile black` to resolve conflict with black
 	isort . --profile black
 
+.PHONY: test
+test:
+	python -m unittest discover -s test
