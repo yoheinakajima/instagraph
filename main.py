@@ -16,6 +16,7 @@ from drivers.driver import Driver
 from drivers.falkordb import FalkorDB
 from drivers.neo4j import Neo4j
 from models import KnowledgeGraph
+from safe_fetch import guarded_session
 
 instructor.patch()
 
@@ -26,6 +27,7 @@ app = Flask(__name__)
 # Set your OpenAI API key
 openai.api_key = os.getenv("OPENAI_API_KEY")
 response_data = ""
+SCRAPE_TIMEOUT_S = 10
 
 # If a Graph database set, then driver is used to store information
 driver: Driver | None = None
@@ -35,7 +37,12 @@ driver: Driver | None = None
 
 
 def scrape_text_from_url(url):
-    response = requests.get(url)
+    try:
+        with guarded_session() as session:
+            response = session.get(url, timeout=SCRAPE_TIMEOUT_S)
+    except requests.RequestException as error:
+        logging.warning("web scrape of %s failed: %s", url, error)
+        return "Error: Could not retrieve content from URL."
     if response.status_code != 200:
         return "Error: Could not retrieve content from URL."
     soup = BeautifulSoup(response.text, "html.parser")
