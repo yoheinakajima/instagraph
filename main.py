@@ -1,5 +1,6 @@
 import argparse
 import json
+import logging
 import os
 import re
 
@@ -11,6 +12,8 @@ from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template, request
 from graphviz import Digraph
 
+from drivers.driver import Driver
+from drivers.falkordb import FalkorDB
 from drivers.neo4j import Neo4j
 from models import KnowledgeGraph
 
@@ -25,7 +28,7 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 response_data = ""
 
 # If a Graph database set, then driver is used to store information
-driver = None
+driver: Driver | None = None
 
 
 # Function to scrape text from a website
@@ -38,7 +41,7 @@ def scrape_text_from_url(url):
     soup = BeautifulSoup(response.text, "html.parser")
     paragraphs = soup.find_all("p")
     text = " ".join([p.get_text() for p in paragraphs])
-    print("web scrape done")
+    logging.info("web scrape done")
     return text
 
 
@@ -86,7 +89,9 @@ def correct_json(json_str):
     try:
         return json.loads(json_str)
     except json.JSONDecodeError as e:
-        print("SanitizationError:", e, "for JSON:", json_str)
+        logging.error(
+            "SanitizationError: %s for JSON: %s", str(e), json_str, exc_info=True
+        )
         return None
 
 
@@ -110,7 +115,8 @@ def get_response_data():
         )
     else:
         prompt = f"Help me understand following by describing as a detailed knowledge graph: {user_input}"
-    print("starting openai call", prompt)
+
+    logging.info("starting openai call: %s", prompt)
     try:
         completion: KnowledgeGraph = openai.ChatCompletion.create(
             model="gpt-3.5-turbo-16k",
@@ -137,21 +143,20 @@ def get_response_data():
 
     except openai.error.RateLimitError as e:
         # request limit exceeded or something.
-        print(e)
+        logging.warning("%s", e)
         return jsonify({"error": "rate limitation"}), 429
     except Exception as e:
         # general exception handling
-        print(e)
+        logging.error("%s", e)
         return jsonify({"error": "unknown error"}), 400
 
     try:
         if driver:
             results = driver.get_response_data(response_data)
-            print("Results from Graph:", results)
-
+            logging.info("Results from Graph:", results)
 
     except Exception as e:
-        print("An error occurred during the Graph operation:", e)
+        logging.error("An error occurred during the Graph operation: %s", e)
         return (
             jsonify(
                 {"error": "An error occurred during the Graph operation: {}".format(e)}
@@ -165,7 +170,6 @@ def get_response_data():
 # Function to visualize the knowledge graph using Graphviz
 @app.route("/graphviz", methods=["POST"])
 def visualize_knowledge_graph_with_graphviz():
-    global response_data
     dot = Digraph(comment="Knowledge Graph")
     response_dict = response_data
     # Add nodes to the graph
@@ -192,9 +196,8 @@ def visualize_knowledge_graph_with_graphviz():
 def get_graph_data():
     try:
         if driver:
-            (nodes, edges) = driver.get_graph_data()
+            nodes, edges = driver.get_graph_data()
         else:
-            global response_data
             # print(response_data)
             response_dict = response_data
             # Assume response_data is global or passed appropriately
@@ -242,7 +245,9 @@ def get_graph_history():
         )
         return jsonify(result)
     except Exception as e:
+        logging.error("%s", e)
         return jsonify({"error": str(e), "graph": driver is not None}), 500
+
 
 @app.route("/")
 def index():
@@ -259,17 +264,20 @@ if __name__ == "__main__":
     port = args.port_num
     graph = args.graph_db
 
-    match graph.lower():
-        case "neo4j":
-            driver = Neo4j()
-        case _:
-            # Default try to connect to Neo4j for backward compatibility
-            try:
-                driver = Neo4j()
-            except Exception:
-                driver = None
-
-    if args.debug:
-        app.run(debug=True, host="0.0.0.0", port=port)
+    if graph.lower() == "neo4j":
+        driver = Neo4j()
+    elif graph.lower() == "falkordb":
+        driver = FalkorDB()
     else:
-        app.run(host="0.0.0.0", port=port)
+        # Default try to connect to Neo4j for backward compatibility
+        try:
+            driver = Neo4j()
+        except Exception:
+            driver = None
+
+    # The Werkzeug debugger allows arbitrary code execution, so it is only ever bound to loopback.
+    # debug=False is explicit: Flask 2.3+ otherwise honors FLASK_DEBUG=1 from the env.
+    if args.debug:
+        app.run(host="127.0.0.1", port=port, debug=True)
+    else:
+        app.run(host="0.0.0.0", port=port, debug=False)
