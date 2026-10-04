@@ -170,7 +170,6 @@ def get_response_data():
 # Function to visualize the knowledge graph using Graphviz
 @app.route("/graphviz", methods=["POST"])
 def visualize_knowledge_graph_with_graphviz():
-    global response_data
     dot = Digraph(comment="Knowledge Graph")
     response_dict = response_data
     # Add nodes to the graph
@@ -197,9 +196,8 @@ def visualize_knowledge_graph_with_graphviz():
 def get_graph_data():
     try:
         if driver:
-            (nodes, edges) = driver.get_graph_data()
+            nodes, edges = driver.get_graph_data()
         else:
-            global response_data
             # print(response_data)
             response_dict = response_data
             # Assume response_data is global or passed appropriately
