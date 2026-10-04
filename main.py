@@ -277,5 +277,6 @@ if __name__ == "__main__":
         except Exception:
             driver = None
 
-    # Never expose the Werkzeug debugger on 0.0.0.0 (arbitrary code exec if reachable)
-    app.run(host="0.0.0.0", port=port)
+    # Never expose the Werkzeug debugger on 0.0.0.0 (arbitrary code exec if reachable).
+    # debug=False is explicit: Flask 2.3+ otherwise honors FLASK_DEBUG=1 from the env.
+    app.run(host="0.0.0.0", port=port, debug=False)
