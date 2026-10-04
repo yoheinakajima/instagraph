@@ -89,6 +89,8 @@ FALKORDB_URL=
 python main.py [--graph neo4j|falkordb] [--port port] [--debug]
 ```
 
+`--debug` enables the Werkzeug debugger and binds to `127.0.0.1` only (the debugger allows arbitrary code execution, so it is never exposed on other interfaces).
+
 Navigate to `http://localhost:8080` to see your app running.
 
 ## Run as Container
