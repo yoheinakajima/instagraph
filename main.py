@@ -6,6 +6,7 @@ import re
 
 import instructor
 import openai
+import litellm
 import requests
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
@@ -24,7 +25,7 @@ load_dotenv()
 app = Flask(__name__)
 
 # Set your OpenAI API key
-openai.api_key = os.getenv("OPENAI_API_KEY")
+litellm.api_key = os.getenv("OPENAI_API_KEY")
 response_data = ""
 
 # If a Graph database set, then driver is used to store information
@@ -118,7 +119,7 @@ def get_response_data():
 
     logging.info("starting openai call: %s", prompt)
     try:
-        completion: KnowledgeGraph = openai.ChatCompletion.create(
+        completion: KnowledgeGraph = litellm.completion(
             model="gpt-3.5-turbo-16k",
             messages=[
                 {
